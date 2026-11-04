@@ -1,0 +1,16 @@
+{
+  "name": "forgers-finger",
+  "version": "1.0.0",
+  "description": "Forgers Finger — a comedic art forgery and auction party game for TV + phones",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

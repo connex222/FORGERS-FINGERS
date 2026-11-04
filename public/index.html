@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14213A">
+<title>Forgers Finger</title>
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<style>
+@font-face { font-family: 'FF Display'; src: url('/assets/fonts/display.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'FF Body'; src: url('/assets/fonts/body.woff2') format('woff2'); font-display: swap; }
+
+:root {
+  --bg: #F7F4EC; --panel: #FFFFFF; --ink: #14213A; --muted: #4A5568; --line: #CFC6B2;
+  --accent: #8E2433; --accent-ink: #FFFFFF; --brass: #8A6A12; --good: #1E7A3C; --bad: #B3261E;
+  --sel: #C9A245;
+  --display: 'FF Display', 'Bodoni 72', Didot, 'Playfair Display', Georgia, serif;
+  --body: 'FF Body', Alegreya, 'Iowan Old Style', Palatino, Georgia, serif;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0F1A2C; --panel: #18263D; --ink: #F4EEDF; --muted: #B8C0CC; --line: #33445F;
+    --accent: #C24152; --brass: #E2C26E; --good: #5BD17F; --bad: #FF7A70; --sel: #E2C26E; }
+}
+body.after { --accent: #A3245E; }
+@media (prefers-color-scheme: dark) { body.after { --accent: #D2407F; } }
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 18px; line-height: 1.4;
+  overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+#app { height: 100dvh; display: flex; flex-direction: column; }
+
+/* ---------- Common ---------- */
+.bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 2px solid var(--line); background: var(--panel); flex: none; }
+.bar .role { font-weight: 700; font-size: 16px; padding: 4px 12px; border-radius: 20px; background: var(--ink); color: var(--bg); }
+.bar .role.master { background: var(--accent); color: var(--accent-ink); }
+.bar .me { display: flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; }
+.bar .me span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .clock { margin-left: auto; font-family: var(--display); font-size: 30px; min-width: 56px; text-align: right; }
+.bar .clock.low { color: var(--bad); }
+.body { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.foot { flex: none; padding: 10px 14px calc(12px + var(--safe-b)); background: var(--panel); border-top: 2px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 36px; line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.15; }
+.lead { font-size: 19px; color: var(--muted); }
+.center { text-align: center; align-items: center; justify-content: center; }
+.card { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.card.secret { border-color: var(--accent); border-width: 3px; }
+.small { font-size: 15px; color: var(--muted); }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+.btn { min-height: 56px; border-radius: 14px; border: 0; font-size: 20px; font-weight: 700; padding: 0 18px;
+  background: var(--accent); color: var(--accent-ink); width: 100%; }
+.btn:disabled { opacity: .4; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+.btn.quiet { background: transparent; color: var(--muted); min-height: 44px; font-size: 17px; font-weight: 400; text-decoration: underline; }
+.btn:focus-visible, .seg button:focus-visible, .tool:focus-visible, .sw:focus-visible { outline: 3px solid var(--sel); outline-offset: 2px; }
+input { font: inherit; font-size: 22px; width: 100%; min-height: 56px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--panel); color: var(--ink); padding: 0 14px; -webkit-user-select: text; user-select: text; }
+input:focus { outline: 3px solid var(--sel); border-color: transparent; }
+input.code-in { font-family: var(--display); font-size: 40px; letter-spacing: 14px; text-transform: uppercase; text-align: center; }
+label { font-weight: 700; display: block; margin-bottom: 6px; }
+.err { color: var(--bad); font-weight: 700; min-height: 24px; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; background: var(--bg); padding: 4px; border-radius: 12px; border: 2px solid var(--line); }
+.seg button { min-height: 46px; border: 0; border-radius: 9px; background: transparent; font-size: 17px; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.field + .field { margin-top: 14px; }
+
+/* ---------- Avatars ---------- */
+.av { position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  width: 40px; height: 40px; flex: none; overflow: hidden; border: 2px solid var(--sel); background: #555; }
+.av b { font-family: var(--display); font-size: 20px; color: #fff; }
+.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.av.img-ok b { visibility: hidden; }
+.av.lg { width: 130px; height: 130px; border-width: 4px; } .av.lg b { font-size: 64px; }
+.av-1 { background: #8E3B46; } .av-2 { background: #2F6E8E; } .av-3 { background: #6E8E2F; } .av-4 { background: #8E6A2F; }
+.av-5 { background: #5B3F8E; } .av-6 { background: #2F8E6A; } .av-7 { background: #8E2F7A; } .av-8 { background: #4A4A4A; }
+
+/* ---------- Join ---------- */
+.brand { display: flex; justify-content: center; position: relative; min-height: 90px; align-items: center; }
+.brand img { max-width: 80%; max-height: 120px; }
+.brand .brand-text { font-family: var(--display); font-size: 44px; color: var(--accent); }
+.brand.img-ok .brand-text { display: none; }
+
+/* ---------- Draw ---------- */
+.prompt { padding: 8px 14px; background: var(--panel); border-bottom: 2px solid var(--line); flex: none; }
+.prompt .k { font-size: 14px; color: var(--muted); }
+.prompt .v { font-family: var(--display); font-size: 21px; line-height: 1.15; }
+.prompt.master { background: var(--accent); color: var(--accent-ink); }
+.prompt.master .k { color: inherit; opacity: .85; }
+.easel { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.canvas-box { position: relative; border-radius: 4px; box-shadow: 0 0 0 4px var(--sel), 0 8px 20px rgba(0,0,0,.35); background: #F3EAD7; }
+.canvas-box canvas { width: 100%; height: 100%; display: block; touch-action: none; border-radius: 4px; }
+.tools { flex: none; padding: 8px 10px calc(8px + var(--safe-b)); background: var(--panel); border-top: 2px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.palette { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.sw { height: 38px; border-radius: 10px; border: 2px solid rgba(0,0,0,.3); position: relative; }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--panel), 0 0 0 6px var(--ink); }
+.sw.rubber { background: repeating-linear-gradient(45deg, #F3EAD7 0 6px, #ddd2ba 6px 12px) !important; font-size: 11px; font-weight: 700; color: #333; }
+.row { display: flex; gap: 6px; align-items: stretch; }
+.tool { flex: 1; min-height: 44px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 4px; }
+.tool[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.tool .dot { background: currentColor; border-radius: 50%; display: inline-block; }
+.tool.warn { color: var(--bad); }
+.sizes { display: flex; gap: 6px; flex: 1.4; }
+
+/* ---------- Auction ---------- */
+.title-card { background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 16px; }
+.title-card .k { font-size: 14px; opacity: .8; } .title-card .v { font-family: var(--display); font-size: 24px; line-height: 1.15; }
+.lots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lot { position: relative; border-radius: 10px; border: 3px solid transparent; padding: 0; background: none; text-align: left; }
+.lot canvas { width: 100%; aspect-ratio: 3 / 4; display: block; border-radius: 7px; background: #F3EAD7; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.lot .letter { position: absolute; left: 6px; top: 6px; background: var(--ink); color: var(--bg); font-family: var(--display);
+  font-size: 22px; min-width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.lot.sel { border-color: var(--sel); box-shadow: 0 0 0 3px var(--accent); }
+.lot.sel::after { content: 'Buying'; position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: var(--accent); color: #fff;
+  font-weight: 700; font-size: 15px; padding: 3px 12px; border-radius: 12px; }
+.lot.mine canvas { opacity: .45; }
+.lot.mine::after { content: 'Yours'; position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); background: var(--ink); color: var(--bg);
+  font-weight: 700; padding: 4px 14px; border-radius: 12px; }
+.heart { position: absolute; right: 6px; top: 6px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(0,0,0,.25);
+  background: rgba(255,255,255,.9); font-size: 22px; display: flex; align-items: center; justify-content: center; color: #8E2433; }
+.heart[aria-pressed="true"] { background: #C8102E; color: #fff; border-color: #fff; }
+.amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.amounts button { min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); font-weight: 700; font-size: 18px; }
+.amounts button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ---------- Results ---------- */
+.big-num { font-family: var(--display); font-size: 54px; line-height: 1; }
+.delta { font-size: 26px; font-weight: 700; } .delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+.preview { width: 60%; max-width: 240px; aspect-ratio: 3/4; margin: 0 auto; box-shadow: 0 0 0 4px var(--sel); border-radius: 4px; }
+.preview canvas { width: 100%; height: 100%; display: block; }
+.adult-card { border-color: var(--accent); border-width: 3px; }
+.pill { display: inline-block; padding: 4px 12px; border-radius: 20px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 15px; }
+
+#toast { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); background: var(--ink); color: var(--bg);
+  padding: 14px 16px; border-radius: 12px; font-weight: 700; transform: translateY(-160%); transition: transform .25s; z-index: 10; }
+#toast.show { transform: none; }
+#net { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bad); color: #fff; text-align: center; font-weight: 700;
+  padding: 8px calc(8px + var(--safe-b)); z-index: 9; }
+#net[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="net" hidden>Reconnecting…</div>
+
+<script src="/shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const app = $('#app');
+  const esc = FF.esc;
+
+  let S = null, key = '', joined = false;
+  let lots = {}, lotList = [], lotsRound = -1;
+  let me = load();
+  const auc = { round: -1, sel: null, amount: 2, heart: null };
+  let pendingDrawing = null, lastPhase = '';
+
+  function load() { try { return JSON.parse(localStorage.getItem('ff-player') || '{}'); } catch { return {}; } }
+  function save() { try { localStorage.setItem('ff-player', JSON.stringify(me)); } catch { /* ignore */ } }
+
+  const qsCode = new URLSearchParams(location.search).get('code');
+  if (qsCode && qsCode.toUpperCase() !== me.code) { me.code = qsCode.toUpperCase().slice(0, 4); me.pid = null; }
+
+  /* ---------- Socket ---------- */
+  const sock = FF.socket({
+    open() {
+      $('#net').hidden = true;
+      if (me.code && me.pid) sock.send({ t: 'join', code: me.code, pid: me.pid, name: me.name });
+      else if (!joined) render();
+    },
+    close() { $('#net').hidden = false; },
+    message(m) {
+      switch (m.t) {
+        case 'joined':
+          joined = true; me.pid = m.pid; me.code = m.code; me.name = m.name; save();
+          wakeLock();
+          break;
+        case 'error':
+          if (m.code === 'noroom' || m.code === 'started') { me.pid = null; save(); joined = false; S = null; key = ''; render(); }
+          showError(m.msg);
+          break;
+        case 'state': onState(m); break;
+        case 'lots':
+          lotList = m.lots; lotsRound = m.round;
+          lots = Object.fromEntries(m.lots.map(l => [l.letter, l]));
+          key = ''; if (S) render();
+          break;
+        case 'toast': toast(m.msg); break;
+      }
+    },
+  });
+
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+  function showError(msg) { const e = $('#joinErr'); if (e) e.textContent = msg; else toast(msg); }
+  function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch { /* ignore */ } }
+
+  let lock = null;
+  async function wakeLock() {
+    try { if ('wakeLock' in navigator && !lock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } } catch { /* ignore */ }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && joined) wakeLock(); });
+
+  /* ---------- State ---------- */
+  function onState(s) {
+    S = s;
+    FF.setTimeLeft(s.timeLeft);
+    document.body.classList.toggle('after', s.settings.deck === 'adult');
+    if (s.phase !== lastPhase) { buzz(40); lastPhase = s.phase; }
+    if ((s.you && s.you.submitted) || s.phase !== 'draw') pendingDrawing = null;
+    if (pendingDrawing && s.phase === 'draw' && s.you && !s.you.submitted) sock.send({ t: 'drawing', strokes: pendingDrawing });
+    if (auc.round !== s.round) { auc.round = s.round; auc.sel = null; auc.amount = 2; auc.heart = null; }
+    render();
+  }
+
+  function keyFor() {
+    if (!S || !joined) return 'join';
+    const y = S.you, r = S.round, ready = lotsRound === r;
+    switch (S.phase) {
+      case 'lobby': return 'lobby:' + JSON.stringify([S.settings, S.adultConfirmed, y.isVip, y.avatar, S.players.length, S.players.filter(p => p.connected).length]);
+      case 'draw': return y.submitted
+        ? `drawn:${r}:${S.players.filter(p => p.connected && !p.submitted).length}:${y.isVip}`
+        : `draw:${r}:${y.isVip}`;
+      case 'auction': return y.isMaster ? `amaster:${r}:${ready}:${y.isVip}`
+        : y.bid ? `abid:${r}:${S.players.filter(p => p.connected && p.id !== S.masterId && !p.bid).length}:${y.isVip}`
+        : `auction:${r}:${ready}:${y.isVip}`;
+      case 'final': return 'final:' + y.isVip;
+      default: return `${S.phase}:${r}:${y.isVip}`;
+    }
+  }
+
+  function render() {
+    const k = keyFor();
+    if (k === key) { tickUpdate(); return; }
+    key = k;
+    if (!S || !joined) return joinScreen();
+    ({ lobby, intro, draw, auction, reveal, scores, final, void: voided }[S.phase] || waiting)();
+    tickUpdate();
+  }
+
+  const isVip = () => S && S.you && S.you.isVip;
+  const playerById = id => (S.players.find(p => p.id === id) || { name: 'Someone', avatar: 8 });
+  const cmd = c => sock.send({ t: 'cmd', cmd: c });
+
+  function barHTML(roleText, master) {
+    const y = S.you;
+    return `<div class="bar"><span class="me">${FF.avatar(y.avatar, y.name)}<span>${esc(y.name)}</span></span>
+      ${roleText ? `<span class="role ${master ? 'master' : ''}">${roleText}</span>` : ''}
+      <span class="clock" data-clock></span></div>`;
+  }
+
+  /* ---------- Join ---------- */
+  function joinScreen() {
+    app.innerHTML = `<div class="body" style="justify-content:center">
+      <div class="brand"><img src="/assets/logo.png" alt="Forgers Finger" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"><span class="brand-text">Forgers Finger</span></div>
+      <p class="lead" style="text-align:center">The party game of art forgery and outrageous bidding.</p>
+      <div class="field"><label for="code">Gallery code (on the TV)</label>
+        <input id="code" class="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(me.code || '')}"></div>
+      <div class="field"><label for="name">Your name</label>
+        <input id="name" maxlength="12" autocomplete="nickname" value="${esc(me.name || '')}"></div>
+      <p class="err" id="joinErr"></p>
+    </div>
+    <div class="foot"><button class="btn" id="joinBtn">Join the gallery</button></div>`;
+    const code = $('#code'), name = $('#name');
+    code.addEventListener('input', () => { code.value = code.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
+    const go = () => {
+      const c = code.value.trim(), n = name.value.trim();
+      if (c.length !== 4) return showError('The gallery code has 4 letters. It is shown on the TV.');
+      if (!n) return showError('Type your name.');
+      me.code = c; me.name = n; me.pid = null; save();
+      if (!sock.send({ t: 'join', code: c, name: n })) showError('Still connecting. Try again in a moment.');
+    };
+    $('#joinBtn').addEventListener('click', go);
+    name.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    if (!code.value) code.focus();
+  }
+
+  /* ---------- Lobby ---------- */
+  function lobby() {
+    const y = S.you, st = S.settings;
+    const live = S.players.filter(p => p.connected).length;
+    const adult = st.deck === 'adult';
+    const needConfirm = adult && !S.adultConfirmed;
+    let reason = '';
+    if (live < S.min) reason = `Need ${S.min - live} more ${S.min - live === 1 ? 'player' : 'players'}.`;
+    else if (needConfirm) reason = 'Confirm everyone is 18 or over first.';
+
+    const seg = (name, opts, cur) => `<div class="seg" role="group">${opts.map(([v, label]) =>
+      `<button data-set="${name}" data-val="${v}" aria-pressed="${String(v) === String(cur)}">${label}</button>`).join('')}</div>`;
+
+    const vipPanel = !y.isVip ? `<p class="lead" style="text-align:center">Waiting for the Head Curator to start the game.</p>
+      ${adult ? `<p style="text-align:center"><span class="pill">After Hours Collection, adults only</span></p>` : ''}` : `
+      ${needConfirm ? `<div class="card adult-card">
+        <h2>Adults only</h2>
+        <p style="margin:6px 0 12px">The After Hours Collection has cheeky jokes and grown-up themes. Is everyone playing 18 or over?</p>
+        <button class="btn" id="confirmAdult">Yes, everyone is 18 or over</button>
+        <button class="btn quiet" id="backFamily">Switch back to Family</button>
+      </div>` : ''}
+      <div class="card">
+        <h2 style="margin-bottom:10px">You’re the Head Curator</h2>
+        <div class="field"><label>Collection</label>${seg('deck', [['family', 'Family'], ['adult', 'After Hours 18+']], st.deck)}</div>
+        <div class="field"><label>Painting time</label>${seg('drawTime', [[60, '60 s'], [90, '90 s'], [120, '120 s']], st.drawTime)}</div>
+        <div class="field"><label>Each player is the Master</label>${seg('laps', [[1, 'Once'], [2, 'Twice']], st.laps)}</div>
+      </div>`;
+
+    app.innerHTML = `${barHTML('In the lobby')}
+      <div class="body">
+        <div class="center" style="display:flex;flex-direction:column;gap:10px">
+          ${FF.avatar(y.avatar, y.name, 'lg')}
+          <h1>${esc(y.name)}</h1>
+          <button class="btn ghost" id="avBtn" style="width:auto">Change portrait</button>
+          <p class="small">${live} of ${S.max} players in the gallery. Look at the TV.</p>
+        </div>
+        ${vipPanel}
+      </div>
+      ${y.isVip ? `<div class="foot">${reason ? `<p class="small" style="text-align:center">${reason}</p>` : ''}
+        <button class="btn" id="startBtn" ${reason ? 'disabled' : ''}>Start the auction</button></div>` : ''}`;
+
+    $('#avBtn').addEventListener('click', () => sock.send({ t: 'avatar' }));
+    app.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => {
+      const name = b.dataset.set;
+      const val = name === 'deck' ? b.dataset.val : Number(b.dataset.val);
+      sock.send(Object.assign({ t: 'settings' }, { [name]: val }));
+    }));
+    const ca = $('#confirmAdult'); if (ca) ca.addEventListener('click', () => sock.send({ t: 'confirm_adult' }));
+    const bf = $('#backFamily'); if (bf) bf.addEventListener('click', () => sock.send({ t: 'settings', deck: 'family' }));
+    const sb = $('#startBtn'); if (sb) sb.addEventListener('click', () => cmd('start'));
+  }
+
+  /* ---------- Intro ---------- */
+  function intro() {
+    const y = S.you, m = playerById(S.masterId);
+    app.innerHTML = `${barHTML(`Lot ${S.round} of ${S.totalRounds}`, y.isMaster)}
+      <div class="body center" style="display:flex">
+        ${y.isMaster
+          ? `<h1>You are the Master</h1><p class="lead">In a moment you’ll see the true title. Paint it well enough that <b>some</b> people spot it, but not everyone.</p>`
+          : `<h1>You are a forger</h1><p class="lead">${esc(m.name)} is the Master. You’ll only get a vague catalogue entry. Paint something convincing anyway.</p>`}
+      </div>`;
+  }
+
+  /* ---------- Draw ---------- */
+  const pad = { strokes: [], cur: null, color: 1, size: 1, active: null, total: 0, round: -1, armed: false };
+  const padId = () => `${S.code}|${S.round}|${S.masterId}|${S.catalogue}`;
+  const draftKey = () => 'ff-draft-' + padId();
+
+  function draw() { if (S.you.submitted) drawn(); else paintScreen(); }
+
+  function paintScreen() {
+    const y = S.you;
+    if (pad.round !== padId()) {
+      pad.round = padId(); pad.color = 1; pad.size = 1;
+      try { pad.strokes = JSON.parse(sessionStorage.getItem(draftKey()) || '[]'); } catch { pad.strokes = []; }
+      pad.total = pad.strokes.reduce((n, s) => n + (s.p ? s.p.length : 0), 0);
+    }
+    pad.cur = null; pad.active = null;
+    const promptHTML = y.isMaster
+      ? `<div class="prompt master"><p class="k">You are the Master. Paint this true title:</p><p class="v">${esc(y.secretTitle || '')}</p></div>`
+      : `<div class="prompt"><p class="k">Forger. The catalogue only says:</p><p class="v">${esc(S.catalogue || '')}</p></div>`;
+    app.innerHTML = `${barHTML(y.isMaster ? 'Master' : 'Forger', y.isMaster)}
+      ${promptHTML}
+      <div class="easel" id="easel"><div class="canvas-box" id="box"><canvas id="cv" aria-label="Your painting"></canvas></div></div>
+      <div class="tools">
+        <div class="palette">${FF.PALETTE.map((c, i) => `<button class="sw ${i === 0 ? 'rubber' : ''}" data-col="${i}" style="background:${c}"
+          aria-label="${FF.PALETTE_NAMES[i]}" aria-pressed="${i === pad.color}">${i === 0 ? 'Rubber' : ''}</button>`).join('')}</div>
+        <div class="row">
+          <div class="sizes">${FF.SIZES.map((sz, i) => `<button class="tool" data-size="${i}" aria-label="${FF.SIZE_NAMES[i]} brush" aria-pressed="${i === pad.size}">
+            <span class="dot" style="width:${4 + i * 5}px;height:${4 + i * 5}px"></span></button>`).join('')}</div>
+          <button class="tool" id="undo">Undo</button>
+          <button class="tool" id="wash" title="Fill the whole canvas with the chosen colour">Wash</button>
+          <button class="tool warn" id="clear">Clear</button>
+        </div>
+        <button class="btn" id="submit">Sign and submit</button>
+        ${isVip() ? `<button class="btn quiet" id="hurry">Head Curator: give everyone 5 seconds</button>` : ''}
+      </div>`;
+    setupCanvas();
+    app.querySelectorAll('[data-col]').forEach(b => b.addEventListener('click', () => {
+      pad.color = Number(b.dataset.col);
+      app.querySelectorAll('[data-col]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    }));
+    app.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => {
+      pad.size = Number(b.dataset.size);
+      app.querySelectorAll('[data-size]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    }));
+    $('#undo').addEventListener('click', () => { const s = pad.strokes.pop(); if (s && s.p) pad.total -= s.p.length; repaint(); saveDraft(); });
+    $('#wash').addEventListener('click', () => { pad.strokes.push({ f: pad.color }); repaint(); saveDraft(); });
+    $('#clear').addEventListener('click', e => {
+      const b = e.currentTarget;
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Sure?'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear'; }, 2500); return; }
+      pad.strokes = []; pad.total = 0; repaint(); saveDraft(); delete b.dataset.sure; b.textContent = 'Clear';
+    });
+    $('#submit').addEventListener('click', submitDrawing);
+    const h = $('#hurry'); if (h) h.addEventListener('click', () => cmd('skip'));
+  }
+
+  function setupCanvas() {
+    const easel = $('#easel'), box = $('#box'), cv = $('#cv');
+    const size = () => {
+      const w = Math.min(easel.clientWidth - 16, (easel.clientHeight - 16) * 0.75);
+      box.style.width = Math.max(120, Math.floor(w)) + 'px';
+      box.style.height = Math.max(160, Math.floor(w / 0.75)) + 'px';
+      repaint();
+    };
+    requestAnimationFrame(size);
+    window.onresize = () => { if ($('#cv')) size(); };
+
+    const pt = e => {
+      const r = cv.getBoundingClientRect();
+      const x = Math.round((e.clientX - r.left) / r.width * 1000), y = Math.round((e.clientY - r.top) / r.height * 1000);
+      return [Math.max(0, Math.min(1000, x)), Math.max(0, Math.min(1000, y))];
+    };
+    const ctx = () => cv.getContext('2d');
+    const seg = (s, x0, y0, x1, y1) => {
+      const c = ctx(), W = cv.width, H = cv.height;
+      c.strokeStyle = FF.PALETTE[s.c]; c.lineWidth = Math.max(1, FF.SIZES[s.w] * W / 1000); c.lineCap = 'round'; c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(x0 * W / 1000, y0 * H / 1000); c.lineTo(x1 * W / 1000, y1 * H / 1000); c.stroke();
+    };
+    cv.addEventListener('pointerdown', e => {
+      if (pad.active !== null || S.phase !== 'draw' || S.you.submitted) return;
+      if (pad.total > 56000) { toast('This canvas is full. Time to sign it.'); return; }
+      e.preventDefault();
+      cv.setPointerCapture(e.pointerId);
+      pad.active = e.pointerId;
+      const [x, y] = pt(e);
+      pad.cur = { c: pad.color, w: pad.size, p: [x, y] };
+      pad.strokes.push(pad.cur);
+      pad.total += 2;
+      seg(pad.cur, x, y, x, y);
+    });
+    cv.addEventListener('pointermove', e => {
+      if (e.pointerId !== pad.active || !pad.cur) return;
+      e.preventDefault();
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ev of (evs.length ? evs : [e])) {
+        const [x, y] = pt(ev);
+        const p = pad.cur.p, lx = p[p.length - 2], ly = p[p.length - 1];
+        if (Math.abs(x - lx) + Math.abs(y - ly) < 4) continue;
+        if (p.length >= 3996) { pad.cur = { c: pad.cur.c, w: pad.cur.w, p: [lx, ly] }; pad.strokes.push(pad.cur); pad.total += 2; }
+        pad.cur.p.push(x, y); pad.total += 2;
+        seg(pad.cur, lx, ly, x, y);
+      }
+    });
+    const end = e => {
+      if (e.pointerId !== pad.active) return;
+      pad.active = null; pad.cur = null;
+      repaint(); saveDraft();
+    };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+  }
+  function repaint() { const cv = $('#cv'); if (cv) FF.paint(cv, pad.strokes); }
+  function saveDraft() { try { sessionStorage.setItem(draftKey(), JSON.stringify(pad.strokes)); } catch { /* full: ignore */ } }
+
+  function submitDrawing() {
+    if (!S || S.phase !== 'draw' || S.you.submitted || pendingDrawing) return;
+    pendingDrawing = pad.strokes.slice();
+    sock.send({ t: 'drawing', strokes: pendingDrawing });
+    try { sessionStorage.removeItem(draftKey()); } catch { /* ignore */ }
+    const b = $('#submit'); if (b) { b.disabled = true; b.textContent = 'Signing…'; }
+    buzz(60);
+  }
+
+  function drawn() {
+    const left = S.players.filter(p => p.connected && !p.submitted).length;
+    app.innerHTML = `${barHTML(S.you.isMaster ? 'Master' : 'Forger', S.you.isMaster)}
+      <div class="body center" style="display:flex">
+        <h1>Signed and sealed</h1>
+        <div class="preview"><canvas id="pv"></canvas></div>
+        <p class="lead">${left ? `Waiting for ${left} more ${left === 1 ? 'painter' : 'painters'}.` : 'Hanging the paintings…'} Keep a straight face.</p>
+      </div>
+      ${isVip() && left ? `<div class="foot"><button class="btn ghost" id="hurry">Give everyone 5 seconds</button></div>` : ''}`;
+    requestAnimationFrame(() => FF.paint($('#pv'), pad.round === padId() ? pad.strokes : []));
+    const h = $('#hurry'); if (h) h.addEventListener('click', () => cmd('skip'));
+  }
+
+  /* ---------- Auction ---------- */
+  function lotGrid(allowBuy) {
+    return `<div class="lots">${lotList.map(l => `
+      <div class="lot ${l.mine ? 'mine' : ''} ${auc.sel === l.letter ? 'sel' : ''}" data-lot-card="${l.letter}" role="button" tabindex="0"
+        aria-label="Lot ${l.letter}${l.mine ? ', your painting' : ''}">
+        <canvas data-lot="${l.letter}"></canvas><span class="letter">${l.letter}</span>
+        ${l.mine ? '' : `<button class="heart" data-heart="${l.letter}" aria-label="Admire lot ${l.letter}" aria-pressed="${auc.heart === l.letter}">♥</button>`}
+      </div>`).join('')}</div>`;
+  }
+
+  function auction() {
+    const y = S.you;
+    if (y.isMaster) return auctionMaster();
+    if (y.bid) return bidPlaced();
+    if (lotsRound !== S.round) { app.innerHTML = `${barHTML('Auction')}<div class="body center" style="display:flex"><h2>Hanging the paintings…</h2></div>`; return; }
+    app.innerHTML = `${barHTML('Collector')}
+      <div class="body">
+        <div class="title-card"><p class="k">The genuine painting is titled</p><p class="v">“${esc(S.title)}”</p></div>
+        <p class="small">Tap the painting you think is genuine. Tap ♥ to admire your favourite (optional).</p>
+        ${lotGrid(true)}
+      </div>
+      <div class="foot">
+        <div class="amounts">${[1, 2, 3].map(a => `<button data-amt="${a}" aria-pressed="${auc.amount === a}">${a * 100} gns</button>`).join('')}</div>
+        <button class="btn" id="bidBtn"></button>
+        ${isVip() ? `<button class="btn quiet" id="closeBids">Head Curator: close bidding now</button>` : ''}
+      </div>`;
+    FF.paintAll(app, lots);
+    const refresh = () => {
+      app.querySelectorAll('[data-lot-card]').forEach(c => c.classList.toggle('sel', c.dataset.lotCard === auc.sel));
+      app.querySelectorAll('[data-heart]').forEach(h => h.setAttribute('aria-pressed', h.dataset.heart === auc.heart));
+      app.querySelectorAll('[data-amt]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.amt) === auc.amount));
+      const b = $('#bidBtn');
+      b.disabled = !auc.sel;
+      b.textContent = auc.sel ? `Bid ${auc.amount * 100} gns on Lot ${auc.sel}` : 'Choose a painting';
+    };
+    app.querySelectorAll('[data-lot-card]').forEach(c => {
+      const pickLot = () => { const l = lots[c.dataset.lotCard]; if (!l || l.mine) return; auc.sel = l.letter; buzz(15); refresh(); };
+      c.addEventListener('click', e => { if (e.target.closest('[data-heart]')) return; pickLot(); });
+      c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickLot(); } });
+    });
+    app.querySelectorAll('[data-heart]').forEach(h => h.addEventListener('click', e => {
+      e.stopPropagation();
+      auc.heart = auc.heart === h.dataset.heart ? null : h.dataset.heart; refresh();
+    }));
+    app.querySelectorAll('[data-amt]').forEach(b => b.addEventListener('click', () => { auc.amount = Number(b.dataset.amt); refresh(); }));
+    $('#bidBtn').addEventListener('click', () => {
+      if (!auc.sel) return;
+      sock.send({ t: 'bid', lot: auc.sel, amount: auc.amount, heart: auc.heart });
+      $('#bidBtn').disabled = true; buzz(80);
+    });
+    const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
+    refresh();
+  }
+
+  function auctionMaster() {
+    if (lotsRound !== S.round) { app.innerHTML = `${barHTML('Master', true)}<div class="body center" style="display:flex"><h2>Hanging the paintings…</h2></div>`; return; }
+    const y = S.you;
+    if (auc.heart === null && y.heart) auc.heart = y.heart;
+    app.innerHTML = `${barHTML('Master', true)}
+      <div class="body">
+        <div class="card secret"><h2>Your painting is Lot ${esc(y.lot || '?')}</h2>
+          <p>You score if <b>some</b> collectors buy it, but not all of them. Keep a straight face.</p></div>
+        <p class="small">While you wait, tap ♥ to admire someone else’s painting.</p>
+        ${lotGrid(false)}
+      </div>
+      ${isVip() ? `<div class="foot"><button class="btn ghost" id="closeBids">Close bidding now</button></div>` : ''}`;
+    FF.paintAll(app, lots);
+    app.querySelectorAll('[data-heart]').forEach(h => h.addEventListener('click', () => {
+      auc.heart = auc.heart === h.dataset.heart ? null : h.dataset.heart;
+      app.querySelectorAll('[data-heart]').forEach(x => x.setAttribute('aria-pressed', x.dataset.heart === auc.heart));
+      sock.send({ t: 'heart', lot: auc.heart });
+    }));
+    const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
+  }
+
+  function bidPlaced() {
+    const b = S.you.bid;
+    const waiting = S.players.filter(p => p.connected && p.id !== S.masterId && !p.bid).length;
+    app.innerHTML = `${barHTML('Collector')}
+      <div class="body center" style="display:flex">
+        <h1>Paddle raised</h1>
+        <p class="big-num">Lot ${esc(b.lot)}</p>
+        <p class="lead">${b.amount * 100} gns. Hold your nerve.</p>
+        ${S.you.heart ? `<p class="small">You admired Lot ${esc(S.you.heart)}.</p>` : ''}
+        <p class="small">${waiting ? `Waiting for ${waiting} more ${waiting === 1 ? 'bid' : 'bids'}.` : 'All bids are in.'}</p>
+      </div>
+      ${isVip() && waiting ? `<div class="foot"><button class="btn ghost" id="closeBids">Close bidding now</button></div>` : ''}`;
+    const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
+  }
+
+  /* ---------- Reveal / scores / void / final ---------- */
+  function reveal() {
+    const b = S.you.bid;
+    app.innerHTML = `${barHTML('The reveal', S.you.isMaster)}
+      <div class="body center" style="display:flex">
+        <h1>Eyes on the TV</h1>
+        <p class="lead">${S.you.isMaster ? 'The truth about your masterpiece is coming out.' : b ? `You bid ${b.amount * 100} gns on Lot ${esc(b.lot)}.` : 'You didn’t bid this time.'}</p>
+      </div>
+      ${isVip() ? `<div class="foot"><button class="btn ghost" id="nx">Skip to the ledger</button></div>` : ''}`;
+    const nx = $('#nx'); if (nx) nx.addEventListener('click', () => cmd('next'));
+  }
+
+  function scores() {
+    const r = S.results || { deltas: {} };
+    const d = r.deltas[S.you.id] || 0;
+    const ranked = [...S.players].sort((a, b) => b.score - a.score);
+    const rank = ranked.findIndex(p => p.id === S.you.id) + 1;
+    const last = S.round >= S.totalRounds;
+    app.innerHTML = `${barHTML('The ledger')}
+      <div class="body center" style="display:flex">
+        <p class="lead">You are ${ordinal(rank)} of ${ranked.length}</p>
+        <p class="big-num">${FF.money(S.you.score)}</p>
+        <p class="delta ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${FF.signed(d)} this lot</p>
+        <p class="small">${last ? 'Final results' : 'Next lot'} in <span data-secs></span> seconds.</p>
+      </div>
+      ${isVip() ? `<div class="foot"><button class="btn" id="nx">${last ? 'Show final results' : 'Next lot'}</button></div>` : ''}`;
+    const nx = $('#nx'); if (nx) nx.addEventListener('click', () => cmd('next'));
+  }
+
+  function voided() {
+    app.innerHTML = `${barHTML('Lot withdrawn')}
+      <div class="body center" style="display:flex"><h1>Lot withdrawn</h1>
+        <p class="lead">${S.voided === 'master' ? 'The Master’s painting never arrived.' : 'Not enough paintings arrived.'} On to the next one.</p></div>
+      ${isVip() ? `<div class="foot"><button class="btn" id="nx">Next lot</button></div>` : ''}`;
+    const nx = $('#nx'); if (nx) nx.addEventListener('click', () => cmd('next'));
+  }
+
+  function final() {
+    const f = S.final || { ranking: [], awards: [] };
+    const rank = f.ranking.findIndex(r => r.id === S.you.id) + 1;
+    const NAMES = { forger: 'Master Forger', gullible: 'Most Generous Collector', favourite: 'People’s Favourite', eagle: 'Eagle Eye' };
+    const mine = f.awards.filter(a => a.id === S.you.id).map(a => NAMES[a.key]);
+    app.innerHTML = `${barHTML('Final results')}
+      <div class="body center" style="display:flex">
+        <p class="lead">You finished</p>
+        <p class="big-num">${rank ? ordinal(rank) : '–'}</p>
+        <p class="lead">${FF.money(S.you.score)}</p>
+        ${mine.length ? `<p>${mine.map(n => `<span class="pill">${n}</span>`).join(' ')}</p>` : ''}
+        <p class="small">The TV is showing tonight’s genuine masterpieces.</p>
+      </div>
+      ${isVip() ? `<div class="foot"><button class="btn" id="again">Back to the lobby</button></div>` : ''}`;
+    const a = $('#again'); if (a) a.addEventListener('click', () => cmd('next'));
+  }
+
+  function waiting() { app.innerHTML = `<div class="body center" style="display:flex"><h2>One moment…</h2></div>`; }
+
+  function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+
+  /* ---------- Clock ---------- */
+  function tickUpdate() {
+    const sec = FF.secondsLeft();
+    document.querySelectorAll('[data-clock]').forEach(el => {
+      const show = S && ['draw', 'auction'].includes(S.phase);
+      el.textContent = show ? sec : '';
+      el.classList.toggle('low', show && sec <= 10);
+    });
+    document.querySelectorAll('[data-secs]').forEach(el => { el.textContent = sec; });
+  }
+  setInterval(() => {
+    if (!S) return;
+    tickUpdate();
+    // Auto-submit whatever is on the canvas when time runs out
+    if (S.phase === 'draw' && S.you && !S.you.submitted && !pendingDrawing && FF.deadline && Date.now() >= FF.deadline) submitDrawing();
+  }, 250);
+
+  render();
+})();
+</script>
+</body>
+</html>
