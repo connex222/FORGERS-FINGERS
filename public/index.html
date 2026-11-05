@@ -145,48 +145,96 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 #net[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+<link rel="stylesheet" href="/phone-stage6.css">
+<link rel="stylesheet" href="/tutorial.css">
 </head>
 <body>
 <div id="app"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="net" hidden>Reconnecting…</div>
+<button id="phoneAudio" type="button" aria-label="Audio settings" style="position:fixed;left:8px;top:calc(7px + env(safe-area-inset-top, 0px));z-index:8;padding:5px 9px;border:1px solid #aa914f;border-radius:8px;background:#f7f4ec;color:#14213a;font-size:13px">Sound off</button>
+<div id="phoneAudioPanel" role="group" aria-label="Audio controls" hidden style="position:fixed;left:8px;top:calc(43px + env(safe-area-inset-top, 0px));z-index:10;background:#241a12;color:#fff4d3;border:2px solid #b79548;border-radius:9px;padding:12px;font:15px/1.7 system-ui,sans-serif;box-shadow:0 5px 20px #000b">
+ <label style="display:block"><input type="checkbox" data-phone-audio="enabled"> Sound enabled</label>
+ <label style="display:block"><input type="checkbox" data-phone-audio="music"> Music</label>
+ <label style="display:block"><input type="checkbox" data-phone-audio="effects"> Effects</label>
+ <label style="display:block"><input type="checkbox" data-phone-audio="voice"> Tutorial voice</label>
+ <button type="button" id="phoneAudioClose" style="padding:5px 12px">Close</button>
+</div>
+<button id="phoneHow" type="button" aria-label="How to Play" style="position:fixed;right:8px;top:calc(7px + env(safe-area-inset-top, 0px));z-index:8;padding:5px 9px;border:1px solid #aa914f;border-radius:8px;background:#f7f4ec;color:#14213a;font-size:13px">How to Play</button>
 
 <script src="/shared.js"></script>
+<script src="/tutorial.js"></script>
 <script>
 (function () {
   'use strict';
   const $ = s => document.querySelector(s);
   const app = $('#app');
   const esc = FF.esc;
+  $('#phoneHow').addEventListener('click', FF.showRules);
+  // Phones are silent by default until their owner enables sound.
+  try { if (!localStorage.getItem('ff-audio')) { FF.audio.music = false; FF.saveAudio(); } } catch {}
+  function updatePhoneAudio() {
+    $('#phoneAudio').textContent = FF.audio.enabled ? 'Sound on' : 'Sound off';
+    document.querySelectorAll('[data-phone-audio]').forEach(el => el.checked = !!FF.audio[el.dataset.phoneAudio]);
+  }
+  $('#phoneAudio').addEventListener('click', () => {
+    const panel = $('#phoneAudioPanel'); panel.hidden = !panel.hidden; updatePhoneAudio();
+  });
+  $('#phoneAudioClose').addEventListener('click', () => { $('#phoneAudioPanel').hidden = true; $('#phoneAudio').focus(); });
+  document.querySelectorAll('[data-phone-audio]').forEach(el => el.addEventListener('change', () => {
+    FF.audio[el.dataset.phoneAudio] = el.checked; FF.saveAudio();
+    FF.music(S && S.phase, 0.12); updatePhoneAudio();
+  }));
+  updatePhoneAudio();
 
   let S = null, key = '', joined = false;
   let lots = {}, lotList = [], lotsRound = -1;
   let me = load();
   const auc = { round: -1, sel: null, amount: 2, heart: null };
   let pendingDrawing = null, lastPhase = '';
+  try { pendingDrawing = JSON.parse(sessionStorage.getItem('ff-pending-drawing') || 'null'); } catch { pendingDrawing = null; }
+  function keepPending() {
+    try {
+      if (pendingDrawing) sessionStorage.setItem('ff-pending-drawing', JSON.stringify(pendingDrawing));
+      else sessionStorage.removeItem('ff-pending-drawing');
+    } catch { /* storage unavailable */ }
+  }
+  function clearSession() { me.pid = null; me.resumeToken = null; save(); }
+  function sendPending() {
+    if (pendingDrawing && S && S.phase === 'draw' && pendingDrawing.round === S.round && S.you && !S.you.submitted)
+      sock.send({ t: 'drawing', ...pendingDrawing });
+  }
 
   function load() { try { return JSON.parse(localStorage.getItem('ff-player') || '{}'); } catch { return {}; } }
   function save() { try { localStorage.setItem('ff-player', JSON.stringify(me)); } catch { /* ignore */ } }
 
   const qsCode = new URLSearchParams(location.search).get('code');
-  if (qsCode && qsCode.toUpperCase() !== me.code) { me.code = qsCode.toUpperCase().slice(0, 4); me.pid = null; }
+  if (qsCode && /^[A-HJ-NP-Z]{4}$/i.test(qsCode) && qsCode.toUpperCase() !== me.code) {
+    me.code = qsCode.toUpperCase(); me.pid = null; me.resumeToken = null; save();
+  }
+  // Legacy pid-only sessions cannot be trusted. Rejoin as a new lobby player.
+  if (me.pid && !me.resumeToken) clearSession();
 
   /* ---------- Socket ---------- */
   const sock = FF.socket({
     open() {
       $('#net').hidden = true;
-      if (me.code && me.pid) sock.send({ t: 'join', code: me.code, pid: me.pid, name: me.name });
+      if (me.code && me.pid && me.resumeToken) sock.send({ t: 'join', code: me.code, pid: me.pid, resumeToken: me.resumeToken, name: me.name });
       else if (!joined) render();
     },
     close() { $('#net').hidden = false; },
     message(m) {
       switch (m.t) {
         case 'joined':
-          joined = true; me.pid = m.pid; me.code = m.code; me.name = m.name; save();
-          wakeLock();
+          if (!joined) FF.sfx('join', {volume:0.25});
+          joined = true; me.pid = m.pid; me.code = m.code; me.name = m.name; if (m.resumeToken) me.resumeToken = m.resumeToken; save();
+          wakeLock(); sendPending();
           break;
         case 'error':
-          if (m.code === 'noroom' || m.code === 'started') { me.pid = null; save(); joined = false; S = null; key = ''; render(); }
+          if (['noroom', 'started', 'resume_denied'].includes(m.code)) { clearSession(); joined = false; S = null; key = ''; render(); }
+          if (['drawing_invalid','drawing_size','drawing_id'].includes(m.code)) {
+            pendingDrawing = null; keepPending(); key = ''; render();
+          }
           showError(m.msg);
           break;
         case 'state': onState(m); break;
@@ -195,6 +243,14 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
           lots = Object.fromEntries(m.lots.map(l => [l.letter, l]));
           key = ''; if (S) render();
           break;
+        case 'drawing_received':
+          if (pendingDrawing && pendingDrawing.round === m.round && pendingDrawing.submissionId === m.submissionId) {
+            pendingDrawing = null; keepPending(); FF.sfx('submit', {volume:0.25});
+            try { sessionStorage.removeItem(draftKey()); } catch { /* ignore */ }
+          }
+          break;
+        case 'bid_accepted': FF.sfx('bid', {volume:0.25}); toast(`Bid accepted: ${m.amount * 100} guineas on Lot ${m.lot}.`); break;
+        case 'pass_accepted': toast('Pass accepted. You may still admire a painting.'); break;
         case 'toast': toast(m.msg); break;
       }
     },
@@ -218,9 +274,12 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     S = s;
     FF.setTimeLeft(s.timeLeft);
     document.body.classList.toggle('after', s.settings.deck === 'adult');
-    if (s.phase !== lastPhase) { buzz(40); lastPhase = s.phase; }
-    if ((s.you && s.you.submitted) || s.phase !== 'draw') pendingDrawing = null;
-    if (pendingDrawing && s.phase === 'draw' && s.you && !s.you.submitted) sock.send({ t: 'drawing', strokes: pendingDrawing });
+    document.body.dataset.phase = s.phase;
+    if (s.phase !== lastPhase) { buzz(40); lastPhase = s.phase; FF.music(s.phase, 0.12); }
+    if (pendingDrawing && (s.phase !== 'draw' || pendingDrawing.round !== s.round || (s.you && s.you.submitted))) {
+      pendingDrawing = null; keepPending();
+    }
+    sendPending();
     if (auc.round !== s.round) { auc.round = s.round; auc.sel = null; auc.amount = 2; auc.heart = null; }
     render();
   }
@@ -279,7 +338,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       const c = code.value.trim(), n = name.value.trim();
       if (c.length !== 4) return showError('The gallery code has 4 letters. It is shown on the TV.');
       if (!n) return showError('Type your name.');
-      me.code = c; me.name = n; me.pid = null; save();
+      me.code = c; me.name = n; clearSession(); pendingDrawing = null; keepPending(); save();
       if (!sock.send({ t: 'join', code: c, name: n })) showError('Still connecting. Try again in a moment.');
     };
     $('#joinBtn').addEventListener('click', go);
@@ -365,11 +424,18 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       pad.total = pad.strokes.reduce((n, s) => n + (s.p ? s.p.length : 0), 0);
     }
     pad.cur = null; pad.active = null;
-    const promptHTML = y.isMaster
-      ? `<div class="prompt master"><p class="k">You are the Master. Paint this true title:</p><p class="v">${esc(y.secretTitle || '')}</p></div>`
-      : `<div class="prompt"><p class="k">Forger. The catalogue only says:</p><p class="v">${esc(S.catalogue || '')}</p></div>`;
-    app.innerHTML = `${barHTML(y.isMaster ? 'Master' : 'Forger', y.isMaster)}
-      ${promptHTML}
+    app.innerHTML = `<header class="paint-masthead">
+        <img src="/assets/logo.png" alt="Forgers Finger">
+        <span class="lot-marker">Lot ${S.round} / ${S.totalRounds}</span>
+        <button type="button" id="drawHelp" aria-label="How to Play">Help</button>
+      </header>
+      <div class="paint-prompt ${y.isMaster ? 'master' : ''}">
+        <p class="k">${y.isMaster ? 'The true title — for the Master’s eyes only' : 'The catalogue entry — for your forgery'}</p>
+        <p class="v">${esc(y.isMaster ? (y.secretTitle || '') : (S.catalogue || ''))}</p>
+      </div>
+      <div class="paint-identity"><div class="artist">${FF.avatar(y.avatar, y.name)}
+        <span class="name">${esc(y.name)} · ${y.isMaster ? 'Master' : 'Forger'}</span></div>
+        <span class="clock" data-clock aria-label="Time remaining"></span></div>
       <div class="easel" id="easel"><div class="canvas-box" id="box"><canvas id="cv" aria-label="Your painting"></canvas></div></div>
       <div class="tools">
         <div class="palette">${FF.PALETTE.map((c, i) => `<button class="sw ${i === 0 ? 'rubber' : ''}" data-col="${i}" style="background:${c}"
@@ -382,8 +448,10 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
           <button class="tool warn" id="clear">Clear</button>
         </div>
         <button class="btn" id="submit">Sign and submit</button>
+        <p class="paint-receipt" role="status">Your painting stays on this device until the gallery confirms receipt.</p>
         ${isVip() ? `<button class="btn quiet" id="hurry">Head Curator: give everyone 5 seconds</button>` : ''}
       </div>`;
+    $('#drawHelp').addEventListener('click', FF.showRules);
     setupCanvas();
     app.querySelectorAll('[data-col]').forEach(b => b.addEventListener('click', () => {
       pad.color = Number(b.dataset.col);
@@ -464,9 +532,10 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 
   function submitDrawing() {
     if (!S || S.phase !== 'draw' || S.you.submitted || pendingDrawing) return;
-    pendingDrawing = pad.strokes.slice();
-    sock.send({ t: 'drawing', strokes: pendingDrawing });
-    try { sessionStorage.removeItem(draftKey()); } catch { /* ignore */ }
+    if (JSON.stringify(pad.strokes).length > 210000) { toast('Painting is too detailed. Undo some strokes before signing.'); return; }
+    pendingDrawing = { round: S.round, submissionId: (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now()), strokes: pad.strokes.slice() };
+    keepPending();
+    sendPending();
     const b = $('#submit'); if (b) { b.disabled = true; b.textContent = 'Signing…'; }
     buzz(60);
   }
@@ -501,22 +570,25 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     if (lotsRound !== S.round) { app.innerHTML = `${barHTML('Auction')}<div class="body center" style="display:flex"><h2>Hanging the paintings…</h2></div>`; return; }
     app.innerHTML = `${barHTML('Collector')}
       <div class="body">
+        <p class="small">Your available balance: <b>${FF.money(y.score)}</b>. Unaffordable bids are disabled.</p>
         <div class="title-card"><p class="k">The genuine painting is titled</p><p class="v">“${esc(S.title)}”</p></div>
         <p class="small">Tap the painting you think is genuine. Tap ♥ to admire your favourite (optional).</p>
         ${lotGrid(true)}
       </div>
       <div class="foot">
-        <div class="amounts">${[1, 2, 3].map(a => `<button data-amt="${a}" aria-pressed="${auc.amount === a}">${a * 100} gns</button>`).join('')}</div>
+        <div class="amounts">${[1, 2, 3].map(a => `<button data-amt="${a}" aria-pressed="${auc.amount === a}" ${y.score < a * 100 ? 'disabled' : ''}>${a * 100} gns${y.score < a * 100 ? ' (unaffordable)' : ''}</button>`).join('')}</div>
         <button class="btn" id="bidBtn"></button>
+        <button class="btn quiet" id="passBtn">Pass — cannot afford / no bid</button>
         ${isVip() ? `<button class="btn quiet" id="closeBids">Head Curator: close bidding now</button>` : ''}
       </div>`;
     FF.paintAll(app, lots);
+    if (y.score < auc.amount * 100) auc.amount = [3,2,1].find(a => y.score >= a * 100) || 0;
     const refresh = () => {
       app.querySelectorAll('[data-lot-card]').forEach(c => c.classList.toggle('sel', c.dataset.lotCard === auc.sel));
       app.querySelectorAll('[data-heart]').forEach(h => h.setAttribute('aria-pressed', h.dataset.heart === auc.heart));
       app.querySelectorAll('[data-amt]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.amt) === auc.amount));
       const b = $('#bidBtn');
-      b.disabled = !auc.sel;
+      b.disabled = !auc.sel || !auc.amount || y.score < auc.amount * 100;
       b.textContent = auc.sel ? `Bid ${auc.amount * 100} gns on Lot ${auc.sel}` : 'Choose a painting';
     };
     app.querySelectorAll('[data-lot-card]').forEach(c => {
@@ -530,9 +602,13 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     }));
     app.querySelectorAll('[data-amt]').forEach(b => b.addEventListener('click', () => { auc.amount = Number(b.dataset.amt); refresh(); }));
     $('#bidBtn').addEventListener('click', () => {
-      if (!auc.sel) return;
+      if (!auc.sel || !auc.amount || y.score < auc.amount * 100) return;
       sock.send({ t: 'bid', lot: auc.sel, amount: auc.amount, heart: auc.heart });
       $('#bidBtn').disabled = true; buzz(80);
+    });
+    $('#passBtn').addEventListener('click', () => {
+      sock.send({ t: 'pass', heart: auc.heart });
+      $('#passBtn').disabled = true;
     });
     const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
     refresh();
@@ -560,17 +636,24 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
   }
 
   function bidPlaced() {
-    const b = S.you.bid;
+    const b = S.you.bid, passed = !!b.pass;
+    if (auc.heart === null && S.you.heart) auc.heart = S.you.heart;
     const waiting = S.players.filter(p => p.connected && p.id !== S.masterId && !p.bid).length;
     app.innerHTML = `${barHTML('Collector')}
-      <div class="body center" style="display:flex">
-        <h1>Paddle raised</h1>
-        <p class="big-num">Lot ${esc(b.lot)}</p>
-        <p class="lead">${b.amount * 100} gns. Hold your nerve.</p>
-        ${S.you.heart ? `<p class="small">You admired Lot ${esc(S.you.heart)}.</p>` : ''}
-        <p class="small">${waiting ? `Waiting for ${waiting} more ${waiting === 1 ? 'bid' : 'bids'}.` : 'All bids are in.'}</p>
+      <div class="body" style="display:flex;flex-direction:column;gap:12px">
+        <h1>${passed ? 'Passed this lot' : 'Paddle raised'}</h1>
+        <p class="lead">${passed ? 'No guineas committed.' : `Lot ${esc(b.lot)} — ${b.amount * 100} gns, accepted.`}</p>
+        <p class="small">You have ${FF.money(S.you.score)}. ${waiting ? `Waiting for ${waiting} more auction decisions.` : 'All auction decisions are in.'}</p>
+        <p class="small">You can still ♥ admire another painting (optional).</p>
+        ${lotGrid(false)}
       </div>
       ${isVip() && waiting ? `<div class="foot"><button class="btn ghost" id="closeBids">Close bidding now</button></div>` : ''}`;
+    FF.paintAll(app, lots);
+    app.querySelectorAll('[data-heart]').forEach(h => h.addEventListener('click', () => {
+      auc.heart = auc.heart === h.dataset.heart ? null : h.dataset.heart;
+      app.querySelectorAll('[data-heart]').forEach(x => x.setAttribute('aria-pressed', x.dataset.heart === auc.heart));
+      sock.send({ t: 'heart', lot: auc.heart });
+    }));
     const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
   }
 
@@ -580,7 +663,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     app.innerHTML = `${barHTML('The reveal', S.you.isMaster)}
       <div class="body center" style="display:flex">
         <h1>Eyes on the TV</h1>
-        <p class="lead">${S.you.isMaster ? 'The truth about your masterpiece is coming out.' : b ? `You bid ${b.amount * 100} gns on Lot ${esc(b.lot)}.` : 'You didn’t bid this time.'}</p>
+        <p class="lead">${S.you.isMaster ? 'The truth about your masterpiece is coming out.' : b && b.pass ? 'You passed this auction.' : b ? `You bid ${b.amount * 100} gns on Lot ${esc(b.lot)}.` : 'You didn’t bid this time.'}</p>
       </div>
       ${isVip() ? `<div class="foot"><button class="btn ghost" id="nx">Skip to the ledger</button></div>` : ''}`;
     const nx = $('#nx'); if (nx) nx.addEventListener('click', () => cmd('next'));

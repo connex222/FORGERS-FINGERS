@@ -1,118 +1,83 @@
-# Forgers Finger
+# FORGER'S FINGER — Stage 6 Batch D — Local Acceptance Candidate
 
-A comedic art-forgery party game for 3–8 players. The TV is the auction room; each phone is a paintbrush and a bidding paddle.
+**Private games-night game for 3–8 people.** One TV/browser is the gallery; phones are paintbrushes and auction paddles. UK English. Family and After Hours (18+) collections retained.
 
-## How it plays
+**No GitHub or Render changes have been made.** This ZIP includes the approved **Stage 6 Batch A** TV lobby, auction gallery and phone painting layouts, **Batch B** reveal, guinea ledger, final awards and genuine gallery, **plus Batch C** illustrated tutorial and original music/effects, on top of the tested security/scoring/recovery repairs. All 42 included Node tests passed. Browser/device acceptance and hosted restart recovery remain outstanding (see `QA-REPORT.md`).
 
-1. **The Master** secretly gets the true title of a lost masterpiece (for example, *"The Duke of Wellington losing his sock to a duck"*).
-2. **Everyone else** only sees a vague catalogue entry (*"Portrait, c.1803 — A nobleman in distress"*) and paints a forgery anyway.
-3. All paintings hang on the TV. The true title is revealed, and everyone **bids 100, 200 or 300 guineas** on the one they think is genuine. They can also tap ♥ to admire a favourite.
-4. **The reveal:** each painting is stamped FORGERY or GENUINE.
+## Windows: the easy way (no individual code lines)
 
-### Scoring (everyone starts with 1,000 guineas)
+1. Download the complete Stage 6 Batch D ZIP and right-click **Extract All**.
+2. Install **Node.js 22 or newer** from <https://nodejs.org/> if it is not already installed.
+3. Open the extracted `forgers-finger` folder.
+4. Double-click **`START-FORGERS-FINGER.bat`**. If Windows asks permission for Node.js on your **private** home network, allow it for Private networks only.
+5. For phone/TV play, use the **LAN TV address printed in the launcher window** (for example **http://192.168.1.42:3000/tv**) in your TV or PC browser. **Do not open the TV using localhost if you want to scan the QR code with phones**: that QR would incorrectly point to each phone’s own device. For one-PC testing without phones, **http://localhost:3000/tv** is fine.
+6. On each phone, scan the QR code or enter **`http://YOUR-PC-IP:3000`** and type the gallery code. Phones need to be on the **same private Wi-Fi/LAN**, and Windows Firewall must allow Node.js on **Private networks only**. If several PC addresses are shown (e.g. VPNs), choose the Wi-Fi or Ethernet IPv4 address under Windows **Settings → Network & internet → Properties**.
+7. Join 3–8 people. The Head Curator chooses the collection, painting time and rotations, then starts.
+8. To stop the game, return to the black console window and press **Ctrl+C**, then close it. Do not close that window during a match.
 
-| What happens | Effect |
-|---|---|
-| You buy the genuine painting | You gain your bid |
-| You buy a forgery | You lose your bid, and **the forger gets it** |
-| Master: some but not all buyers find the genuine | +200 per buyer who found it |
-| Master: everyone or nobody finds it | Nothing ("too obvious" / "too obscure") |
-| Most ♥ admirers on your painting | +100 (ties all score) |
+`START-FORGERS-FINGER.bat` performs the offline locked installation automatically. There are **zero external npm dependencies**, so an npm-registry connection is not required. It uses a Windows user-protected local recovery key and encrypts saved rooms in the local `.local-data` directory. Protect this folder; do not upload it to GitHub. If you delete it, saved galleries cannot be recovered. The private reconnect credential lives in each phone's local browser storage; clearing browser data loses that device's ability to resume.
 
-Scores can't go below zero. After every player has been the Master (once or twice), the TV shows the podium, four awards and a slideshow of the night's genuine paintings.
+If the launcher is blocked by local PowerShell policy, open a command prompt in this folder, run `npm ci --offline` once, then `npm start` (these are the fallback steps only). This fallback has no durable room recovery unless you configure the variables below.
 
-### Collections
+## Run the complete technical QA
 
-- **Family Collection** — 54 silly, all-ages titles.
-- **After Hours Collection (18+)** — 54 cheeky, innuendo-heavy titles. The Head Curator must confirm everyone is 18 or over before it starts. Changes the TV's look to the After Hours theme.
+Double-click **`RUN-QA.bat`**. It runs syntax, asset and integrated tests automatically. Alternatively:
 
-### Head Curator
-
-The first person to join is the Head Curator (if they leave, it passes to the next player). Their phone has the settings (collection, painting time 60/90/120 s, once or twice each) and the Start / Next buttons. They can also give everyone 5 seconds to finish painting, or close bidding early. The TV has the same buttons if you're using a laptop with a mouse.
-
----
-
-## Files
-
-```
-forgers-finger/
-├── server.js            Game server (rooms, rounds, scoring)
-├── decks.js             All painting titles + Lord Gavelby's lines (edit freely)
-├── package.json
-├── GRAPHICS_PROMPT.md   The ChatGPT art brief
-└── public/
-    ├── tv.html          TV screen   → yoursite/tv
-    ├── index.html       Phone screen → yoursite/
-    ├── shared.js        Shared drawing + connection code
-    └── assets/          Put your art, sounds and fonts here
-        ├── sfx/
-        └── fonts/
+```shell
+npm ci --offline
+npm run qa
 ```
 
----
+`npm test` runs the shipped automated tests independently; the current number and exact results are recorded in `STAGE6-BATCH-D-QA.md`. Browser-based acceptance requires a locally permitted Chromium/phone testing environment; see `QA-REPORT.md`.
 
-## Run it on your computer (to test)
+## Gameplay and scoring
 
-1. Install **Node.js** (version 18 or newer) from nodejs.org if you haven't already.
-2. Open a terminal in the `forgers-finger` folder.
-3. Run `npm install` (once only — it downloads the `ws` library).
-4. Run `npm start`.
-5. Open **http://localhost:3000/tv** in your browser. That's the TV.
-6. Open **http://localhost:3000** in other browser tabs (or phones on the same Wi-Fi using your computer's IP address, e.g. `http://192.168.1.20:3000`). Join with the code on the TV.
+Each artist begins with **1,000 guineas**. The Master sees the secret genuine painting title during drawing; forgers see only the catalogue description. At auction the title is revealed and every eligible collector can **bid 100, 200 or 300 guineas**, provided their current balance covers the full bid, or **Pass**. The Master cannot bid. A heart can be given to one other artist's painting, even when passing.
 
-## Put it online with Render (same as your other games)
+A correct genuine bid **wins the amount bid**. An incorrect bid **transfers the amount bid** from buyer to the forger; it never creates an unaffordable payout. When **some but not all actual bids** identify the genuine painting, the Master gets **200 guineas per correct buyer**. The most-loved artwork receives **100 guineas** for its artist; ties each receive 100. The player with the most guineas after every Master's turn wins. The TV also awards the existing four medals.
 
-1. Create a new GitHub repo (e.g. `connex222/FORGERS-FINGER`) and upload everything in this folder **except** `node_modules`.
-2. In Render: **New → Web Service** → connect that repo.
-3. Settings:
-   - **Runtime:** Node
-   - **Build command:** `npm install`
-   - **Start command:** `npm start`
-   - **Instance type:** Free is fine
-4. Deploy. Your TV address is `https://your-app.onrender.com/tv`; players go to `https://your-app.onrender.com`.
-5. Add it to your Game Night Hub page.
+Tap **How to Play** on the TV or phone to open nine illustrated chapters. **Play** starts the chapters, **Pause** stops them, **Next/Previous** move around, and **Back to lobby / game** returns you to the same screen without changing the game phase.
 
-On Render's free plan the server sleeps when unused, so open the TV page a minute before people arrive.
+The 14 newly generated, actual MP3 files are included: two music pieces and twelve sound cues. **Sound is off until you enable it.** On TV, choose **Turn sound on** and use **Audio options** for separate Music, Effects and Voice preferences. On the phone, use **Sound off/on** near the top left, then choose the components you want. Phone background music starts off by default to avoid every phone playing music at once. All toggles remember your choices between rounds and page refreshes.
 
----
+**Voice:** If your browser supplies speech synthesis, the optional Voice setting reads tutorial chapters and certain Lord Gavelby lines using a device-provided English voice (British voices preferred). It is **not** a recorded Northern English professional narrator; the exact voice depends on your device. Captions always remain available. If audio does not start automatically, use a sound button/tap first — browsers restrict unrequested playback.
 
-## Adding the art
+## Security / reconnect behaviour
 
-Follow `GRAPHICS_PROMPT.md`, then drop each file into `public/assets/` using **exactly** the filename listed. Until a file exists, the game shows a clean styled fallback, so you can add art one piece at a time and redeploy.
+On first join, the server privately sends a random token to that phone. The visible `pid` and four-letter room code are **not** credentials. The device stores its reconnect token locally. The old server's pid-only resume is **not compatible**: previously joined phones must join again **with a name, in a fresh lobby**, once after this update. A previously opened TV without valid stored credentials also needs a new gallery code; an invalid resume never silently hijacks or creates another gallery.
 
-## Adding sound (optional, e.g. with Creative Claw)
+If the Head Curator disconnects, the role passes to the **first connected player in original joining order**. A previous Curator who reconnects does not automatically take back the role. Players who disconnect during a game may rejoin with valid credentials. A drawing is retained locally until the server acknowledges it, and a retried submission cannot count twice. Round deadlines are authoritative on the server, not on clients.
 
-Put MP3s in `public/assets/sfx/` with these names. Any missing file is simply silent. On the TV, click **Turn sound on** (browsers block sound until you click).
+## Local recovery / hosting limitations
 
-| File | When it plays |
-|---|---|
-| `music-lobby.mp3` | Looping lobby music (quiet) |
-| `music-draw.mp3` | Looping painting-time music (quiet) |
-| `join.mp3` | A player joins |
-| `gavel.mp3` | New round, auction opens |
-| `submit.mp3` | A painting is signed |
-| `bid.mp3` | A bid is placed |
-| `tick.mp3` | Each of the last 5 seconds |
-| `drumroll.mp3` | Each painting before its stamp |
-| `stamp-forgery.mp3` | FORGERY stamp |
-| `stamp-genuine.mp3` | GENUINE seal |
-| `applause.mp3` | People's Favourite |
-| `coins.mp3` | The ledger appears |
-| `fanfare.mp3` | Final results |
-| `sad-trombone.mp3` | A lot is withdrawn |
+The Windows launcher enables local restart recovery by setting `FF_DATA_DIR` and `FF_PERSISTENCE_KEY` to a user-protected value. You can enable the same mechanism manually by setting **both** environment variables before `npm start`; the secret must be at least 32 characters. Never commit a key or `.room` files. The store uses AES-256-GCM encryption and atomic writes. The server restores the same room code, stable player IDs, settings, painting data, phase/deadline, scoring history, bids, votes and awards where the stored snapshot is intact.
 
-## Fonts (optional)
+**Render's ephemeral filesystem is not a durable store.** Do not assume local encrypted files make Render restarts recoverable. To enable production restart recovery, first select a truly persistent provider and implement/configure its adapter (for example a durable managed PostgreSQL database) and run restart tests on the real deployment. This project does **not** connect to any production database or create a paid service. Multiple server instances also require a shared state/room routing design. See the recovery blocker in `REPAIR-REPORT.md`.
 
-To match your offline rule, bundle free fonts as woff2 files in `public/assets/fonts/`:
-- `display.woff2` — headings (suggestion: **Abril Fatface** or **Playfair Display**, both free under the Open Font License)
-- `body.woff2` — body text (suggestion: **Alegreya**)
+## File map
 
-Without them, the game falls back to Georgia-style serif fonts already on every device.
+- `server.js` — authoritative room/game server and security gates
+- `lib/rules.js` — pure scoring / bid affordability
+- `lib/transport.js` — small zero-dependency RFC 6455 WebSocket transport
+- `lib/qr.js` — offline QR generator (valid SVG join link)
+- `lib/persistence.js` — opt-in encrypted local snapshot store
+- `public/index.html` — responsive, approved Stage 6 phone painting layout
+- `public/tv.html` — Stage 6 TV lobby, auction, reveal, ledger, final podium, medals and gallery
+- `public/phone-stage6.css`, `public/tv-stage6.css` — Batch A presentation overrides
+- `public/tv-stage6b.css` — Batch B reveal/ledger/final presentation overrides
+- `public/tutorial.js`, `public/tutorial.css`, `public/tutorial-chapters.json` — Batch C graphical tutorial
+- `public/assets/sfx/` — 14 genuine original MP3 assets, locally synthesised, no external recordings
+- `public/shared.js` — client session, sound and tested gallery layout helper
+- `public/assets/` — **unchanged approved source artwork**
+- `decks.js` — all original Family/After Hours content and Gavelby lines unchanged
+- `tests/`, `tools/` — repeatable QA
+- `REPAIR-REPORT.md`, `QA-REPORT.md`, `ASSET-MANIFEST.md`, `UI-UPGRADE-BRIEF.md` — handover
 
-## Editing the titles
+**Stage 6 Batches A, B and C are implemented and QA-tested locally.** The four preview designs were approved. The optional professionally recorded Northern voice, genuine-stamp artwork and licensed fonts remain deferred; physical device acceptance (Batch D) is next. All 26 original art files are unchanged. The final screen now includes Previous/Next/Pause controls for the genuine painting gallery. See `STAGE6-BATCH-C-REPORT.md` and `STAGE6-BATCH-C-QA.md` for current status.
 
-Open `decks.js`. Each line is:
-```js
-['Catalogue entry everyone sees', 'True title only the Master sees'],
-```
-Keep the catalogue entry vague but related, and the true title specific and silly. No limit on how many you add.
+
+## Stage 6 Batch D — acceptance boundary
+
+The Browser/Node verification in `STAGE6-BATCH-D-QA.md` includes real server sessions, a real Chromium DOM via an isolated WebSocket bridge (necessary because this container blocks Chromium network navigation), 3/4/6/8-player paintings at simulated 720p/1080p/4K, and real MP3 decoder checks. **It is not a substitute for actual phone touchscreens, TV overscan, casting or listening tests.** For the simple physical checklist, see `DEVICE-ACCEPTANCE-CHECKLIST.md`.
+
+No GitHub push, Render deployment or changes to the 26 approved images were made. No paid services were created. Production persistence remains blocked pending a real durable hosting adapter.
