@@ -90,3 +90,9 @@ On a **desktop** (with mouse/trackpad), opening the public root URL without a ro
 For testing, open **`https://forgers-fingers-1.onrender.com/tv`** directly in a TV/desktop browser. The QR image comes from `/qr.png?code=ABCD` on that host and points back to the same host. It contains **no private reconnect credential**. Do not use `localhost` on a remote phone or TV.
 
 The Stage 6E lobby uses all eight existing, approved avatar portraits **as dimmed previews of vacant seats**; these preview images are not real connected players. When a player joins, the real player portrait and status replace the corresponding vacant seat. All 26 original artwork image files and the underlying multiplayer/scoring logic are unmodified.
+
+## Stage 6F — Recorded Lord Gavelby (5 November 2026)
+
+This release has nine Creative Claw / ElevenLabs Northern-English narration chapters and three premium auction effects. To use it locally, extract the ZIP and double-click `START-FORGERS-FINGER.bat`. Turn **Sound on**, then enable **Voice** in Audio options. The first playback needs internet access to Creative Claw unless you first double-click `DOWNLOAD-PREMIUM-AUDIO.bat` to save all 12 recordings in your extracted game folder. That download script does not deploy or upload anything.
+
+See `STAGE6F-RELEASE-NOTES.md`, `STAGE6F-QA-REPORT.md` and `LORD-GAVELBY-STAGE6F-SCRIPT.md`. This build has not been deployed to GitHub or Render.

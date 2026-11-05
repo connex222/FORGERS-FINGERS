@@ -1,0 +1,49 @@
+{
+  "narrator": "Ben - Confident Commercial Narrator",
+  "model": "speech/elevenlabs-v4",
+  "voice_id": "Q7VrUY6f87ZLFJfAckYV",
+  "chapters": [
+    {
+      "chapter": 1,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/6da3fb5a-9d63-4358-919b-ff0bb46850e1.mp3"
+    },
+    {
+      "chapter": 2,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/5677d799-511a-4b43-9be5-6d94aefacde7.mp3"
+    },
+    {
+      "chapter": 3,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e4897d64-e77e-4c75-aa1f-9b4930c76afc.mp3"
+    },
+    {
+      "chapter": 4,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/57c9fc98-2bda-484e-bee5-0cc492e531fa.mp3"
+    },
+    {
+      "chapter": 5,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3b83692a-a9d4-420a-a2a7-20a84cf3c839.mp3"
+    },
+    {
+      "chapter": 6,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/040dcf84-82a7-4a0f-b6b9-d671c32ac626.mp3"
+    },
+    {
+      "chapter": 7,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/aa0588b2-1af8-42f2-9221-11e211a7f7bf.mp3"
+    },
+    {
+      "chapter": 8,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e35f6d45-d970-4bb7-a2b1-81e6c29554b1.mp3"
+    },
+    {
+      "chapter": 9,
+      "url": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/4f5add52-b015-434d-9ccd-84898f7290f9.mp3"
+    }
+  ],
+  "effects": {
+    "gavel": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/60a17895-3494-4aec-b35e-ae9fc1168d51.mp3",
+    "stamp-genuine": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/9f17b8a8-1fd0-46bd-8a18-4658198390d1.mp3",
+    "stamp-forgery": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/2cbbc159-1d89-488a-8e06-67864c24dc55.mp3"
+  },
+  "license_note": "Generated in connected Creative Claw workspace; confirm commercial/redistribution licence before external sale."
+}

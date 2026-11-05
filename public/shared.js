@@ -120,16 +120,30 @@
     }
     if (typeof FF.audioChanged === 'function') FF.audioChanged();
   };
+  const premiumSfx = {
+  "gavel": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/60a17895-3494-4aec-b35e-ae9fc1168d51.mp3",
+  "stamp-genuine": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/9f17b8a8-1fd0-46bd-8a18-4658198390d1.mp3",
+  "stamp-forgery": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/2cbbc159-1d89-488a-8e06-67864c24dc55.mp3"
+};
   FF.sfx = function (name, opts) {
     const category = name.startsWith('music-') ? 'music' : 'effects';
     if (!FF.soundOn || !FF.audio[category]) return;
     try {
       let a = cache[name];
-      if (!a) { a = new Audio(`/assets/sfx/${name}.mp3`); a.preload = 'none'; cache[name] = a; }
+      if (!a) { a = new Audio(premiumSfx[name] || `/assets/sfx/${name}.mp3`); a.preload = 'none'; cache[name] = a; }
       if (opts && opts.loop && !a.paused) return a;
       const node = (opts && opts.loop) ? a : a.cloneNode();
       node.volume = (opts && opts.volume) ?? 0.8;
       node.loop = !!(opts && opts.loop);
+      if (premiumSfx[name] && typeof node.addEventListener === 'function') {
+        node.addEventListener('error', () => {
+          try {
+            node.src = `/assets/sfx/${name}.mp3`;
+            if (typeof node.load === 'function') node.load();
+            node.play().catch(() => { activeEffects.delete(node); });
+          } catch { activeEffects.delete(node); }
+        }, {once:true});
+      }
       if (!node.loop) {
         activeEffects.add(node);
         if (typeof node.addEventListener === 'function') node.addEventListener('ended', () => activeEffects.delete(node), {once:true});
@@ -147,7 +161,7 @@
     if (name !== 'music-draw') FF.stopSfx('music-draw');
     if (name) FF.sfx(name, { loop: true, volume });
   };
-  FF.audioCapabilities = () => ({ recordedNarration: false, browserSpeech: typeof window.speechSynthesis !== 'undefined' });
+  FF.audioCapabilities = () => ({ recordedNarration: true, browserSpeech: typeof window.speechSynthesis !== 'undefined' });
   FF.rules = [
     'The Head Curator chooses Family or After Hours (18+), painting time and whether each artist is Master once or twice.',
     'One Master secretly receives the true painting title. Everyone else sees only a vague catalogue description.',
