@@ -1,0 +1,50 @@
+/* Stage 6 C: original approved imagery, no replacements. Responsive illustrated tutorial. */
+.ff-tutorial { position:fixed;inset:0;z-index:5000;display:grid;place-items:center;box-sizing:border-box;padding:clamp(8px,2vw,24px);background:rgba(5,7,12,.94);color:#f6e9ca;font-family:Georgia,serif; }
+.ff-tutorial-window { display:flex;flex-direction:column;width:min(1280px,100%);max-height:calc(100dvh - 24px);min-height:0;overflow:hidden;border:3px solid #b8954b;border-radius:16px;background:#191c20;box-shadow:0 0 0 8px #171006,0 28px 80px #000; }
+.ff-tutorial-top { display:flex;align-items:center;gap:clamp(8px,1.5vw,20px);padding:10px 20px;background:linear-gradient(110deg,#302316,#121820);min-height:70px;box-sizing:border-box; }
+.ff-tutorial-top img { object-fit:contain;max-width:170px;width:25%;height:55px; }
+.ff-tutorial-top strong { font-size:clamp(16px,2vw,30px);letter-spacing:.02em;flex:1;text-align:center; }
+.ff-tutorial-top [data-ff-chapter] { font:600 clamp(12px,1.5vw,19px)/1.3 system-ui,sans-serif;white-space:nowrap;color:#d0b77b; }
+.ff-tutorial-progress {height:5px;background:#3c3026;flex:none;}
+.ff-tutorial-progress span { display:block;height:100%;background:#d6b05b;transition:width .2s; }
+.ff-tutorial-scene { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0;flex:1;overflow:auto; }
+.ff-tutorial-picture { position:relative;min-height:clamp(180px,38vh,540px);display:grid;place-items:center;overflow:hidden; }
+.ff-tutorial-background {position:absolute;inset:0;background-position:center;background-size:cover;filter:brightness(.47) saturate(.8);}
+.ff-tutorial-picture::after { content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset -20px 0 40px #17191b,inset 0 0 90px #0c1017; }
+.ff-tutorial-picture img { position:relative;z-index:1;display:block;max-width:min(86%,530px);max-height:clamp(170px,48vh,500px);object-fit:contain;filter:drop-shadow(0 6px 24px #000); }
+.ff-tutorial-words { display:flex;flex-direction:column;justify-content:center;gap:12px;min-width:0;padding:clamp(16px,3vw,48px);background:radial-gradient(circle at 100% 0,#3e2c21,#131a24 72%); }
+.ff-tutorial-kicker {font:700 clamp(12px,1.7vw,19px) system-ui,sans-serif;color:#d4b35a;letter-spacing:.12em;text-transform:uppercase;}
+.ff-tutorial-words h2 {margin:0;font-size:clamp(25px,3.1vw,49px);line-height:1.1;color:#fff1c9;}
+.ff-tutorial-words p {margin:0;font:clamp(17px,1.8vw,26px)/1.5 system-ui,sans-serif;color:#f7ebd9;}
+.ff-tutorial-voice {color:#c9c2aa;font:clamp(11px,1vw,15px)/1.4 system-ui,sans-serif;}
+.ff-tutorial-controls {display:flex;gap:12px;justify-content:center;align-items:stretch;padding:16px;background:#261c14;flex-wrap:wrap;flex:none;}
+.ff-tutorial-controls button { min-height:54px;min-width:130px;border:2px solid #e2c278;border-radius:9px;background:linear-gradient(#a88444,#6d4822);color:#fff8e4;font:700 clamp(15px,1.4vw,22px)/1.2 system-ui,sans-serif;padding:9px 16px;cursor:pointer;}
+.ff-tutorial-controls [data-ff-close] {background:#342a25;border-color:#bba574;}
+.ff-tutorial-controls button:disabled {opacity:.38;cursor:default;}
+.ff-tutorial-controls button:focus-visible {outline:4px solid #ffe79a;outline-offset:3px;}
+@media(max-width:750px) {
+  .ff-tutorial {padding:6px;}
+  .ff-tutorial-window {max-height:calc(100dvh - 12px);}
+  .ff-tutorial-top {min-height:54px;padding:6px 10px;gap:8px;}
+  .ff-tutorial-top img {max-width:90px;max-height:44px;}
+  .ff-tutorial-top strong {font-size:16px;}
+  .ff-tutorial-top [data-ff-chapter] {font-size:12px;}
+  .ff-tutorial-scene {display:flex;flex-direction:column;}
+  .ff-tutorial-picture {min-height:130px;max-height:26vh;flex:none;}
+  .ff-tutorial-picture img {max-height:25vh;}
+  .ff-tutorial-words {flex:1;justify-content:flex-start;gap:7px;padding:12px 16px;}
+  .ff-tutorial-words h2 {font-size:24px;}
+  .ff-tutorial-words p {font-size:16px;line-height:1.35;}
+  .ff-tutorial-controls {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;}
+  .ff-tutorial-controls button {min-width:0;min-height:46px;font-size:14px;padding:7px 5px;}
+}
+@media(max-height:490px) and (orientation:landscape) {
+  .ff-tutorial-top {min-height:42px;}
+  .ff-tutorial-top img {height:38px;}
+  .ff-tutorial-scene {display:grid;grid-template-columns:36% 64%;}
+  .ff-tutorial-picture {min-height:100px;max-height:none;}
+  .ff-tutorial-words {overflow:auto;}
+  .ff-tutorial-controls {display:flex;flex-wrap:nowrap;}
+  .ff-tutorial-controls button {min-width:0;flex:1;min-height:40px;}
+}
+@media(prefers-reduced-motion:reduce){ .ff-tutorial-progress span {transition:none;} }

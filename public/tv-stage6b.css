@@ -1,0 +1,205 @@
+/* FORGER'S FINGER — Stage 6 Batch B. Approved original art; no server rules modified.
+   TV reveal, truthful round ledger, enlarged four medals, podium and genuine painting gallery. */
+:root { --b-panel:rgba(4,13,27,.90); --b-edge:rgba(231,191,103,.75); --b-muted:#e6d9bc; }
+#view {overflow:visible;}
+
+/* Reveal: framed picture and judgement each own a safe, responsive pane. */
+.reveal-stage {height:100%;min-height:0;}
+.reveal-b {display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);
+  gap:clamp(14px,2.4vw,46px);align-items:center;height:100%;min-height:0;}
+.reveal-b .spot {min-height:0;height:100%;max-height:100%;display:flex;align-items:center;justify-content:center;}
+.reveal-b .spot .frame {height:min(100%,58vh);width:auto;max-width:100%;flex:none;}
+.reveal-b .verdict {height:auto;max-height:100%;min-width:0;overflow:auto;
+  padding:clamp(15px,2.1vw,36px);border:2px solid var(--b-edge);border-radius:17px;
+  background:var(--b-panel);box-shadow:0 14px 40px rgba(0,0,0,.5);}
+.v-kicker,.ledger-eyebrow {font:700 clamp(13px,1.04vw,20px) var(--body);
+  text-transform:uppercase;letter-spacing:.14em;color:var(--brass-hi);}
+.reveal-b .v-lot {font-size:clamp(22px,2.3vw,46px);color:var(--brass-hi);
+  margin:clamp(5px,.8vh,15px) 0;line-height:1.1;}
+.reveal-b .v-q {font-size:clamp(32px,4vw,72px);margin:clamp(6px,1.2vh,18px) 0;
+  overflow-wrap:anywhere;}
+.reveal-b .v-who {gap:clamp(7px,1vw,19px);margin:clamp(9px,1.7vh,20px) 0;}
+.reveal-b .v-who .nm {font-size:clamp(24px,2.8vw,51px);overflow-wrap:anywhere;}
+.reveal-b .v-who .av {width:clamp(64px,7vw,122px);height:clamp(64px,7vw,122px);}
+.reveal-b .v-line,.reveal-b .v-note,.reveal-b .v-empty {font-size:clamp(16px,1.7vw,29px);line-height:1.25;}
+.reveal-b .v-note {margin-top:clamp(12px,2vh,25px);color:var(--b-muted);font-style:italic;}
+.reveal-b .v-buyers {display:flex;gap:clamp(7px,1vw,16px);flex-wrap:wrap;margin:clamp(12px,2vh,24px) 0;}
+.reveal-b .v-buyer {gap:7px;border:1px solid var(--b-edge);background:rgba(255,255,255,.045);
+  font-size:clamp(14px,1.25vw,22px);padding:5px 11px 5px 5px;}
+.reveal-b .v-buyer .av {width:clamp(30px,3.1vw,48px);height:clamp(30px,3.1vw,48px);}
+.reveal-b .v-buyer b {white-space:nowrap;color:var(--brass-hi);}
+.reveal-b .v-total {font:700 clamp(17px,1.8vw,31px) var(--body);margin:clamp(12px,1.8vh,24px) 0;}
+.reveal-b .v-total .plus,.reveal-b .v-transfers .plus {color:#85e7a0;}
+.reveal-b .v-transfers .minus {color:#ff938c;}
+.v-transfers {list-style:none;display:grid;gap:clamp(6px,1vh,12px);margin-top:clamp(9px,1.4vh,20px);}
+.v-transfers li {display:flex;flex-wrap:wrap;gap:clamp(7px,1.1vw,19px);align-items:baseline;
+  padding:clamp(7px,.8vw,13px) clamp(10px,1.1vw,20px);background:rgba(0,0,0,.42);
+  border-left:3px solid var(--brass);font-size:clamp(14px,1.32vw,24px);}
+.v-transfers .v-to {color:var(--b-muted);font-style:italic;font-size:.86em;}
+.reveal-b .v-verdict {font-size:clamp(17px,1.8vw,30px);line-height:1.3;margin-top:clamp(10px,1.4vh,20px);}
+.reveal-b .stamp {max-width:92%;}
+.reveal-b .stamp em {font-size:clamp(22px,4.3vw,75px);padding:.18em .3em;
+  border-width:clamp(4px,.4vw,8px);background:rgba(243,234,215,.9);}
+
+/* Favourite ties: all 1–8 winners fit a responsive genuine-frame grid. */
+.fav-b {height:100%;min-height:0;gap:clamp(4px,.9vh,12px);overflow:visible;}
+.fav-b h2 {font-size:clamp(28px,3.3vw,60px);line-height:1.08;flex:none;}
+.fav-grid {width:100%;flex:1;min-height:0;display:grid;
+  grid-template-columns:repeat(var(--fav-cols,4),minmax(0,1fr));
+  grid-template-rows:repeat(var(--fav-rows,2),minmax(0,1fr));
+  align-items:stretch;justify-items:center;
+  column-gap:clamp(9px,1.5vw,26px);row-gap:clamp(24px,2.7vh,38px);}
+.fav-b .pick {height:100%;width:100%;min-height:0;display:flex;flex-direction:column;
+  align-items:center;gap:clamp(6px,.8vh,12px);}
+.fav-art {position:relative;flex:1;min-height:0;max-width:100%;display:flex;justify-content:center;align-items:center;}
+.fav-b .fav-art .frame {height:100%;max-width:100%;min-height:0;flex:none;}
+.fav-b .rosette {width:clamp(45px,6.5vw,105px);height:clamp(45px,6.5vw,105px);
+  right:clamp(-16px,-.8vw,-8px);top:clamp(-12px,-.5vw,-5px);z-index:1;}
+.fav-b .rosette em {font-size:clamp(28px,4vw,60px);}
+.fav-b .who {max-width:100%;font-size:clamp(13px,1.3vw,23px);line-height:1.15;white-space:normal;}
+.fav-b .who b {color:#8ceaac;white-space:nowrap;}
+.fav-truth {flex:none;max-width:100%;padding:clamp(5px,1vh,13px);
+  background:var(--b-panel);border:1px solid var(--b-edge);border-radius:10px;
+  font-size:clamp(15px,1.55vw,26px);line-height:1.2;}
+.fav-truth i {color:var(--brass-hi);}
+.fav-b .none {font-size:clamp(21px,2.4vw,42px);}
+
+/* Score ledger: every settled delta is backed by precisely labelled components. */
+.scores-b {height:100%;display:flex;flex-direction:column;min-height:0;gap:clamp(7px,1.1vh,17px);}
+.ledger-head {display:flex;gap:clamp(9px,2vw,35px);align-items:end;justify-content:space-between;flex:none;}
+.scores-b h2 {font:400 clamp(33px,3.1vw,61px) var(--display);line-height:1.02;color:var(--paper);}
+.ledger-guide {font-size:clamp(12px,1.3vw,22px);text-align:right;max-width:46%;line-height:1.2;color:var(--b-muted);}
+.scores-b .ledger {display:grid;grid-template-columns:1fr;grid-auto-flow:row;gap:clamp(7px,1.1vh,13px);
+  flex:1;min-height:0;max-width:none;overflow:auto;align-content:start;}
+.scores-b .ledger[data-count="6"],.scores-b .ledger[data-count="7"],.scores-b .ledger[data-count="8"] {
+  grid-template-columns:repeat(2,minmax(0,1fr));}
+.scores-b .ledger-entry {min-width:0;display:flex;flex-direction:column;align-items:stretch;
+  gap:clamp(3px,.45vh,7px);padding:clamp(7px,.9vh,13px) clamp(9px,1vw,20px);
+  background:var(--b-panel);border:1px solid var(--b-edge);border-radius:12px;}
+.ledger-primary {display:grid;grid-template-columns:clamp(24px,2.5vw,42px) clamp(35px,3.7vw,62px) minmax(0,1fr) auto auto;
+  gap:clamp(5px,.8vw,15px);align-items:center;min-width:0;}
+.scores-b .ledger .rank {font-size:clamp(18px,2vw,36px);}
+.scores-b .ledger .av {width:clamp(34px,3.5vw,62px);height:clamp(34px,3.5vw,62px);}
+.scores-b .ledger .nm {font-size:clamp(17px,1.55vw,30px);min-width:0;}
+.ledger-total {font:700 clamp(16px,1.65vw,30px) var(--display);color:var(--brass-hi);white-space:nowrap;}
+.scores-b .ledger .dl {font-size:clamp(14px,1.4vw,25px);white-space:nowrap;}
+.ledger-detail {display:flex;flex-wrap:wrap;align-items:center;gap:clamp(4px,.5vw,11px);
+  padding-left:clamp(0px,5vw,103px);line-height:1.2;}
+.ledger-before,.ledger-chip,.ledger-zero {font-size:clamp(12px,.95vw,18px);color:var(--b-muted);white-space:normal;}
+.ledger-before {color:var(--paper);font-weight:700;}
+.ledger-chip {border:1px solid rgba(231,191,103,.44);background:rgba(255,255,255,.05);border-radius:6px;padding:2px 6px;}
+.ledger-chip.gain b {color:#8deaab;}
+.ledger-chip.cost b {color:#ff9992;}
+.ledger-alert {color:#ffbd84;font-size:clamp(12px,1vw,20px);}
+.scores-b .next {flex:none;text-align:right;font-size:clamp(15px,1.4vw,25px);}
+
+/* Final ceremony matches approved two-panel concept: podium + *original* four large medals at left;
+   genuine works rotate in a full-size framed canvas at right. */
+.final-b {height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1.14fr) minmax(0,.86fr);
+  gap:clamp(14px,2vw,37px);}
+.final-b .ceremony {display:flex;flex-direction:column;align-items:stretch;gap:clamp(5px,.7vh,12px);
+  min-height:0;overflow:auto;background:rgba(4,13,27,.56);border:2px solid var(--b-edge);
+  border-radius:16px;padding:clamp(10px,1.05vw,22px);}
+.ceremony-head {text-align:center;flex:none;}
+.ceremony-head h1 {font:400 clamp(27px,2.45vw,51px)/1.08 var(--display);margin:clamp(2px,.4vh,7px) 0 0;}
+.final-b .podium {flex:none;height:clamp(150px,21vh,455px);gap:clamp(7px,1vw,20px);align-items:flex-end;}
+.final-b .pod {width:min(33%,220px);min-width:0;gap:clamp(3px,.4vh,8px);}
+.final-b .pod .av {width:clamp(52px,6vw,135px);height:clamp(52px,6vw,135px);border-width:clamp(2px,.3vw,5px);}
+.final-b .pod.p1 .av {width:clamp(68px,7vw,155px);height:clamp(68px,7vw,155px);}
+.final-b .pod .nm {font-size:clamp(13px,1.3vw,25px);text-align:center;
+  max-width:100%;overflow-wrap:anywhere;line-height:1.05;}
+.final-b .pod .sc {font-size:clamp(13px,1.24vw,22px);white-space:nowrap;}
+.final-b .pod .block {font-size:clamp(37px,4vw,75px);width:100%;padding-top:clamp(2px,.5vh,9px);}
+.final-b .pod.p1 .block {height:clamp(57px,11vh,235px);}
+.final-b .pod.p2 .block {height:clamp(48px,8vh,175px);}
+.final-b .pod.p3 .block {height:clamp(40px,6vh,135px);}
+.final-b .rest {flex:none;margin:0;gap:5px;font-size:clamp(11px,.91vw,18px);}
+.final-b .rest span {padding:3px 8px;}
+.final-b .awards {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:clamp(7px,.9vw,15px);margin:clamp(4px,.7vh,12px) 0 0;flex:0 0 auto;}
+.final-b .award {min-width:0;display:flex;gap:clamp(6px,.8vw,15px);padding:clamp(5px,.65vw,13px);
+  align-items:center;border:1px solid var(--b-edge);border-radius:12px;background:var(--b-panel);}
+.final-b .award .medal {width:clamp(76px,min(8.6vw,15vh),200px);
+  height:clamp(76px,min(8.6vw,15vh),200px);font-size:clamp(28px,4vw,60px);
+  display:flex;align-items:center;justify-content:center;flex:none;}
+.final-b .award .medal img {width:100%;height:100%;object-fit:contain;}
+.final-b .award-copy {min-width:0;line-height:1.12;overflow-wrap:anywhere;}
+.final-b .award .t {font-size:clamp(14px,1.2vw,24px);line-height:1.08;}
+.final-b .award .award-winner {font-weight:700;font-size:clamp(14px,1.15vw,23px);margin:clamp(3px,.5vh,8px) 0;}
+.final-b .award .d {font-size:clamp(11px,.95vw,19px);line-height:1.15;color:var(--b-muted);}
+.final-b .award-empty {font-size:clamp(15px,1.2vw,22px);}
+.final-b .gallery-b {display:flex;flex-direction:column;min-height:0;height:100%;min-width:0;
+  gap:clamp(6px,1vh,16px);background:var(--b-panel);border:2px solid var(--b-edge);
+  border-radius:16px;padding:clamp(10px,1.05vw,22px);}
+.final-b .gallery-b h3 {font-size:clamp(23px,2vw,39px);line-height:1.1;text-align:center;flex:none;}
+.gallery-slide {flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:clamp(7px,1.5vh,18px);overflow:hidden;}
+.final-b .gallery-slide .frame {height:min(58vh,calc(100% - 85px))!important;
+  min-height:0;max-width:100%;aspect-ratio:3/4;flex:none;}
+.final-b .gallery-slide .cap {margin:0;min-height:0;max-width:100%;
+  font-size:clamp(17px,1.7vw,30px);line-height:1.12;overflow-wrap:anywhere;}
+.final-b .gallery-slide .cap span {display:block;font-size:.76em;color:var(--b-muted);margin-top:3px;}
+.gallery-controls {flex:none;display:flex;gap:clamp(5px,.7vw,12px);align-items:center;justify-content:center;flex-wrap:wrap;}
+.gallery-controls button {font:700 clamp(12px,.9vw,17px) var(--body);padding:clamp(7px,.65vw,13px);
+  border-radius:8px;background:rgba(184,137,52,.14);border:1px solid var(--brass-hi);color:var(--paper);cursor:pointer;
+  min-height:39px;}
+.gallery-controls button:hover,.gallery-controls button:focus-visible {background:var(--oxblood);outline:2px solid var(--brass-hi);outline-offset:2px;}
+.gallery-count {font-size:clamp(13px,1.1vw,20px);white-space:nowrap;color:var(--brass-hi);}
+.gallery-empty {font-size:clamp(17px,1.7vw,30px);text-align:center;color:var(--b-muted);}
+
+@media (max-width:1150px),(max-height:750px) {
+ .reveal-b {grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:12px;}
+ .reveal-b .verdict {padding:12px;}
+ .v-transfers {gap:4px;}
+ .final-b .ceremony,.final-b .gallery-b {padding:8px;}
+ .final-b .podium {height:clamp(135px,19vh,230px);}
+ .final-b .pod .av {width:clamp(42px,6vw,90px);height:clamp(42px,6vw,90px);}
+ .final-b .pod.p1 .av {width:clamp(52px,7vw,105px);height:clamp(52px,7vw,105px);}
+ .final-b .award .medal {width:clamp(65px,min(7.5vw,12vh),130px);height:clamp(65px,min(7.5vw,12vh),130px);}
+ .final-b .gallery-slide .frame {height:min(54vh,calc(100% - 75px))!important;}
+ .scores-b .ledger-entry {padding:6px 9px;}
+ .ledger-detail {padding-left:0;}
+}
+@media (max-width:700px) {
+ .reveal-b {grid-template-columns: minmax(0,.65fr) minmax(0,1.35fr);}
+ .reveal-b .v-who .av {width:45px;height:45px;}
+ .reveal-b .v-who .nm {font-size:20px;}
+ .ledger-primary {grid-template-columns:18px 30px minmax(0,1fr) auto;}
+ .ledger-primary .dl {grid-column:4;}
+ .ledger-primary .ledger-total {grid-column:4;grid-row:1;}
+ .scores-b .ledger[data-count="6"],.scores-b .ledger[data-count="7"],.scores-b .ledger[data-count="8"] {grid-template-columns:1fr;}
+ .final-b {gap:7px;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);}
+ .final-b .awards {grid-template-columns:1fr;}
+ .final-b .award .medal {width:60px;height:60px;}
+ .final-b .gallery-slide .frame {height:min(48vh,calc(100% - 70px))!important;}
+ .gallery-controls button {font-size:11px;padding:5px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .scores-b .ledger-entry,.reveal-b .stamp {animation:none!important;}
+}
+/* Pixel-checked 720p/768p/1080p ceremony fit: avoid scroll-hidden second medal row.
+   A compact, five-place ribbon and shorter podium preserve the full artwork. */
+.final-b .podium {height:clamp(136px,19vh,400px);}
+.final-b .pod .av {width:clamp(42px,3.55vw,115px);height:clamp(42px,3.55vw,115px);}
+.final-b .pod.p1 .av {width:clamp(49px,4vw,140px);height:clamp(49px,4vw,140px);}
+.final-b .pod.p1 .block {height:clamp(46px,6vh,155px);}
+.final-b .pod.p2 .block {height:clamp(39px,4.8vh,122px);}
+.final-b .pod.p3 .block {height:clamp(34px,3.7vh,92px);}
+.final-b .pod .nm {font-size:clamp(12px,1.14vw,22px);line-height:1;}
+.final-b .pod .sc {font-size:clamp(12px,1.05vw,20px);}
+.final-b .rest {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(2px,.35vw,7px);
+  justify-items:stretch;font-size:clamp(11px,.78vw,16px);line-height:1.05;}
+.final-b .rest span {display:block;padding:clamp(2px,.3vh,5px) 3px;border-radius:8px;text-align:center;
+  overflow-wrap:anywhere;}
+.final-b .award {padding:clamp(4px,.45vw,9px);}
+@media (min-width:701px) and (max-height:850px) {
+  .final-b .award .medal {width:clamp(64px,min(7.5vw,12.5vh),112px);
+    height:clamp(64px,min(7.5vw,12.5vh),112px);}
+  .final-b .podium {height:clamp(130px,18vh,175px);}
+  .final-b .ceremony-head h1 {font-size:clamp(26px,2vw,40px);}
+}
+/* Podium digits must sit wholly inside the compressed blocks at TV safe sizes. */
+.final-b .pod .block {line-height:1;padding-top:clamp(2px,.25vh,5px);}
+.final-b .pod.p1 .block {font-size:clamp(30px,4vh,69px);}
+.final-b .pod.p2 .block {font-size:clamp(26px,3.3vh,55px);}
+.final-b .pod.p3 .block {font-size:clamp(23px,2.9vh,48px);}

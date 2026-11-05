@@ -12,6 +12,35 @@
   FF.SIZES = [5, 12, 26, 56];          // brush widths, in thousandths of the canvas width
   FF.SIZE_NAMES = ['Fine', 'Medium', 'Thick', 'Huge'];
 
+  // Stage 6 Batch A: tested, deterministic TV gallery row/column policy.
+  FF.galleryGrid = function (count) {
+    if (!Number.isInteger(count) || count < 1 || count > 8) throw new RangeError('Gallery count must be 1–8');
+    const columns = count <= 3 ? count : count === 4 ? 2 : count <= 6 ? 3 : 4;
+    const rows = count <= 3 ? 1 : 2;
+    return { columns, rows };
+  };
+
+  // Stage 6 Batch B: auditable presentation arithmetic. The server still owns scoring.
+  // Build every ledger line from *settled* result values, never unconfirmed bids.
+  FF.roundLedger = function (players, results) {
+    const r = results || {}, transfers = r.transfers || [], lots = r.lots || [];
+    const winners = new Set(r.heartWinners || []);
+    const deltas = r.deltas || {};
+    return [...players].sort((a, b) => b.score - a.score).map(p => {
+      const genuine = lots.filter(l => l.genuine).flatMap(l => l.buyers || [])
+        .filter(b => b.id === p.id).reduce((total, b) => total + b.amount, 0);
+      const forgeryIn = transfers.filter(t => t.to === p.id).reduce((total, t) => total + t.amount, 0);
+      const forgeryOut = transfers.filter(t => t.from === p.id).reduce((total, t) => total + t.amount, 0);
+      const master = p.id === r.masterId ? (r.masterEarned || 0) : 0;
+      const favourite = lots.filter(l => winners.has(l.letter) && l.ownerId === p.id).length * 100;
+      const delta = deltas[p.id] || 0;
+      const before = p.score - delta;
+      return { player: p, before, after: p.score, delta,
+        breakdown: { genuine, forgeryIn, forgeryOut, master, favourite },
+        consistent: before >= 0 && genuine + forgeryIn - forgeryOut + master + favourite === delta };
+    });
+  };
+
   FF.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -73,22 +102,90 @@
     `<img class="${cls || ''}" src="${src}" alt="${FF.esc(alt || '')}" ` +
     `onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()">`;
 
-  /* ---------- Sound (files are optional; silence if missing) ---------- */
+  /* ---------- Persistent, user-controlled sound settings ---------- */
   const cache = {};
-  FF.soundOn = false;
+  const activeEffects = new Set();
+  const defaults = { enabled: false, music: true, effects: true, voice: true };
+  try { FF.audio = { ...defaults, ...JSON.parse(localStorage.getItem('ff-audio') || '{}') }; }
+  catch { FF.audio = { ...defaults }; }
+  FF.soundOn = !!FF.audio.enabled;
+  FF.saveAudio = function () {
+    FF.soundOn = !!FF.audio.enabled;
+    try { localStorage.setItem('ff-audio', JSON.stringify(FF.audio)); } catch { /* private mode */ }
+    if (!FF.soundOn || !FF.audio.music) { FF.stopSfx('music-lobby'); FF.stopSfx('music-draw'); }
+    if (!FF.soundOn || !FF.audio.voice) FF.stopVoice();
+    if (!FF.soundOn || !FF.audio.effects) {
+      for (const node of activeEffects) { try { node.pause(); node.currentTime = 0; } catch {} }
+      activeEffects.clear();
+    }
+    if (typeof FF.audioChanged === 'function') FF.audioChanged();
+  };
   FF.sfx = function (name, opts) {
-    if (!FF.soundOn) return;
+    const category = name.startsWith('music-') ? 'music' : 'effects';
+    if (!FF.soundOn || !FF.audio[category]) return;
     try {
       let a = cache[name];
-      if (!a) { a = new Audio(`/assets/sfx/${name}.mp3`); a.preload = 'auto'; cache[name] = a; }
+      if (!a) { a = new Audio(`/assets/sfx/${name}.mp3`); a.preload = 'none'; cache[name] = a; }
+      if (opts && opts.loop && !a.paused) return a;
       const node = (opts && opts.loop) ? a : a.cloneNode();
-      node.volume = (opts && opts.volume) || 0.8;
+      node.volume = (opts && opts.volume) ?? 0.8;
       node.loop = !!(opts && opts.loop);
-      node.play().catch(() => {});
+      if (!node.loop) {
+        activeEffects.add(node);
+        if (typeof node.addEventListener === 'function') node.addEventListener('ended', () => activeEffects.delete(node), {once:true});
+      }
+      node.play().catch(() => { activeEffects.delete(node); }); // browsers require a user gesture to unlock audio
       return node;
     } catch { return null; }
   };
   FF.stopSfx = function (name) { const a = cache[name]; if (a) { a.pause(); a.currentTime = 0; } };
+  FF.stopMusic = function () { FF.stopSfx('music-lobby'); FF.stopSfx('music-draw'); };
+  FF.music = function (phase, volume = 0.27) {
+    if (!FF.soundOn || !FF.audio.music) { FF.stopMusic(); return; }
+    const name = phase === 'draw' ? 'music-draw' : phase === 'lobby' ? 'music-lobby' : null;
+    if (name !== 'music-lobby') FF.stopSfx('music-lobby');
+    if (name !== 'music-draw') FF.stopSfx('music-draw');
+    if (name) FF.sfx(name, { loop: true, volume });
+  };
+  FF.audioCapabilities = () => ({ recordedNarration: false, browserSpeech: typeof window.speechSynthesis !== 'undefined' });
+  FF.rules = [
+    'The Head Curator chooses Family or After Hours (18+), painting time and whether each artist is Master once or twice.',
+    'One Master secretly receives the true painting title. Everyone else sees only a vague catalogue description.',
+    'Every artist paints a picture. The Master paints the genuine masterpiece; the others are forgeries. Sign to submit.',
+    'At auction the true title becomes visible. Collectors can bid 100, 200 or 300 guineas on another artist’s painting, provided they have enough money. You may Pass instead.',
+    'You can give one heart to a painting you admire, including when you Pass, but never to your own picture.',
+    'Finding the genuine painting wins you your bid as a bonus. An incorrect bid transfers its full value from you to its forger.',
+    'The Master earns 200 guineas for each correct buyer only when some, but not all, real bids find the genuine painting. Passes are not bids.',
+    'The most-admired painting earns its artist 100 guineas; ties each receive 100.',
+    'After every artist’s Master turn (once or twice), the largest guinea balance wins. The TV also shows special awards and the genuine masterpieces.',
+  ];
+  // The illustrated tutorial lives in /tutorial.js and replaces the basic rules modal.
+  // A safe text-only fallback is retained if the optional script failed to load.
+  FF.showRules = function () {
+    if (typeof FF.showTutorial === 'function') return FF.showTutorial();
+    alert(FF.rules.map((rule, i) => `${i+1}. ${rule}`).join('\n\n'));
+  };
+
+  FF.stopVoice = function () {
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch { /* unsupported */ }
+  };
+  FF.speak = function (text, onFinished, onFailed) {
+    if (!FF.audio.enabled || !FF.audio.voice || !('speechSynthesis' in window) ||
+        !('SpeechSynthesisUtterance' in window)) return false;
+    try {
+      FF.stopVoice();
+      const utterance = new SpeechSynthesisUtterance(String(text));
+      utterance.lang = 'en-GB'; utterance.rate = 0.94; utterance.pitch = 0.82; utterance.volume = 0.92;
+      const choices = window.speechSynthesis.getVoices();
+      const british = choices.filter(v => /^en[-_]GB$/i.test(v.lang));
+      const preferred = british.find(v => /male|george|daniel|ryan|arthur|oliver/i.test(v.name));
+      if (preferred || british[0]) utterance.voice = preferred || british[0];
+      utterance.onend = () => { if (typeof onFinished === 'function') onFinished(); };
+      utterance.onerror = () => { if (typeof onFailed === 'function') onFailed(); };
+      window.speechSynthesis.speak(utterance);
+      return true;
+    } catch { return false; }
+  };
 
   /* ---------- WebSocket with automatic reconnect ---------- */
   FF.socket = function (handlers) {

@@ -284,6 +284,9 @@ body.after #badge { display: flex; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
+<link rel="stylesheet" href="/tv-stage6.css">
+<link rel="stylesheet" href="/tv-stage6b.css">
+<link rel="stylesheet" href="/tutorial.css">
 </head>
 <body data-phase="lobby">
 <div id="stage">
@@ -294,6 +297,13 @@ body.after #badge { display: flex; }
     <div class="chip" id="codeChip" hidden>Code <b id="codeChipText"></b></div>
     <div id="badge"><img src="/assets/badge-18.png" alt="Adults only" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"><span class="badge-text">18+</span></div>
     <button id="soundBtn" type="button">Turn sound on</button>
+    <button id="audioOptions" type="button" aria-expanded="false">Audio options</button>
+    <div id="audioPanel" hidden style="position:absolute;right:15px;top:92px;z-index:100;background:#241a12;color:#fff4d3;padding:14px;border:2px solid #b79548;font-size:20px">
+      <label><input type="checkbox" data-audio="music"> Music</label>
+      <label><input type="checkbox" data-audio="effects"> Effects</label>
+      <label><input type="checkbox" data-audio="voice"> Voice (browser narration)</label>
+    </div>
+    <button id="helpBtn" type="button">How to Play</button>
   </header>
   <main id="view"></main>
   <div id="host">
@@ -306,6 +316,7 @@ body.after #badge { display: flex; }
 </div>
 
 <script src="/shared.js"></script>
+<script src="/tutorial.js"></script>
 <script>
 (function () {
   'use strict';
@@ -315,17 +326,12 @@ body.after #badge { display: flex; }
   const PHASE_MS = { intro: 6000, auction: 50000, scores: 30000, void: 7000 };
 
   let S = null, viewKey = '', lots = {}, lotList = [], lotsRound = -1;
-  let revealStart = 0, revealShown = '', galleryIdx = 0, galleryTimer = null, lastTickSec = -1;
+  let revealStart = 0, revealShown = '', galleryIdx = 0, galleryTimer = null, galleryPaused = false, lastTickSec = -1;
   let saved = null;
   const seen = new Set();
   try { saved = JSON.parse(sessionStorage.getItem('ff-tv') || 'null'); } catch { saved = null; }
 
-  /* ---------- Fit the 1920×1080 stage to any screen ---------- */
-  function fit() {
-    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
-    $('#stage').style.transform = `translate(-50%, -50%) scale(${s})`;
-  }
-  addEventListener('resize', fit); fit();
+  /* Stage 6 Batch A: CSS viewport/grid layout. No fixed 1920×1080 transform. */
 
   /* ---------- Socket ---------- */
   const sock = FF.socket({
@@ -348,21 +354,38 @@ body.after #badge { display: flex; }
           if (S) { viewKey = keyFor(S); build(); }
           break;
         case 'sfx': FF.sfx(m.name); break;
+        case 'error':
+          if (m.code === 'tv_resume_denied') {
+            try { sessionStorage.removeItem('ff-tv'); } catch { /* ignored */ }
+            saved = null;
+            $('#offline').hidden = false;
+            $('#offline').textContent = 'Saved TV gallery not available. Reload this page to create a NEW gallery with a NEW code.';
+          }
+          toast(m.msg); break;
         case 'toast': toast(m.msg); break;
       }
     },
   });
 
   /* ---------- Sound ---------- */
-  $('#soundBtn').addEventListener('click', () => {
-    FF.soundOn = !FF.soundOn;
-    $('#soundBtn').textContent = FF.soundOn ? 'Sound on' : 'Turn sound on';
-    if (FF.soundOn && S) music(S.phase); else { FF.stopSfx('music-lobby'); FF.stopSfx('music-draw'); }
-  });
-  function music(phase) {
-    if (phase === 'lobby') FF.sfx('music-lobby', { loop: true, volume: 0.35 }); else FF.stopSfx('music-lobby');
-    if (phase === 'draw') FF.sfx('music-draw', { loop: true, volume: 0.3 }); else FF.stopSfx('music-draw');
+  function audioControls() {
+    $('#soundBtn').textContent = FF.audio.enabled ? 'Sound on' : 'Turn sound on';
+    document.querySelectorAll('[data-audio]').forEach(el => { el.checked = !!FF.audio[el.dataset.audio]; });
   }
+  audioControls();
+  $('#helpBtn').addEventListener('click', FF.showRules);
+  $('#soundBtn').addEventListener('click', () => {
+    FF.audio.enabled = !FF.audio.enabled; FF.saveAudio();audioControls();
+    if (S) music(S.phase);
+  });
+  $('#audioOptions').addEventListener('click', () => {
+    $('#audioPanel').hidden = !$('#audioPanel').hidden;
+    $('#audioOptions').setAttribute('aria-expanded', String(!$('#audioPanel').hidden));
+  });
+  document.querySelectorAll('[data-audio]').forEach(el=>el.addEventListener('change',()=>{
+    FF.audio[el.dataset.audio] = el.checked; FF.saveAudio();if (S) music(S.phase);
+  }));
+  function music(phase) { FF.music(phase, phase === 'draw' ? 0.23 : 0.27); }
   function phaseSound(phase) {
     music(phase);
     const cue = { intro: 'gavel', auction: 'gavel', scores: 'coins', final: 'fanfare', void: 'sad-trombone' }[phase];
@@ -438,7 +461,11 @@ body.after #badge { display: flex; }
       const changed = key !== viewKey;
       viewKey = key;
       build();
-      if (changed && s.phase !== prev) phaseSound(s.phase);
+      if (changed && s.phase !== prev) {
+        phaseSound(s.phase);
+        // Optional Gavelby quips use a British English device voice; no third-party voice files.
+        if (s.quip && s.phase !== 'lobby' && !document.getElementById('ff-tutorial')) FF.speak(s.quip);
+      }
     } else update();
   }
 
@@ -454,7 +481,7 @@ body.after #badge { display: flex; }
   }
 
   function build() {
-    clearInterval(galleryTimer); galleryTimer = null;
+    clearInterval(galleryTimer); galleryTimer = null; galleryPaused = false;
     revealShown = '';
     if (S.phase !== 'reveal') setHost('auctioneer');
     const r = { lobby, intro, draw, auction, reveal, scores, final, void: voided }[S.phase];
@@ -473,7 +500,8 @@ body.after #badge { display: flex; }
       if (!p) return `<div class="slot empty"><span>Empty wall space</span></div>`;
       const fresh = !seen.has(p.id); seen.add(p.id);
       return `<div class="slot ${p.connected ? '' : 'gone'} ${fresh ? 'new' : ''}">${p.isVip ? '<span class="tag">Head Curator</span>' : ''}
-        ${FF.avatar(p.avatar, p.name)}<span class="slot-name">${esc(p.name)}</span></div>`;
+        ${FF.avatar(p.avatar, p.name)}<span class="slot-name">${esc(p.name)}</span>
+        <span class="slot-status">${p.isVip ? 'Head Curator' : p.connected ? 'Ready to play' : 'Away'}</span></div>`;
     }).join('');
     const vip = ps.find(p => p.isVip);
     let status;
@@ -482,20 +510,23 @@ body.after #badge { display: flex; }
     else status = `Ready when you are. ${esc(vip ? vip.name : 'The Head Curator')} presses Start on their phone.`;
     view.innerHTML = `<section class="lobby">
       <div class="join-card">
-        <p class="join-lead">On your phone, go to</p>
-        <p class="join-url">${esc(location.host)}</p>
-        <p class="join-lead">and enter the gallery code</p>
-        <div class="code">${S.code.split('').map(c => `<span>${c}</span>`).join('')}</div>
-        <span class="collection ${isAdult() ? 'after' : ''}">${isAdult() ? 'After Hours Collection, adults only' : 'Family Collection'}</span>
-        <p class="settings-line">${S.settings.drawTime} seconds to paint. Everyone is the Master ${S.settings.laps === 1 ? 'once' : 'twice'}.</p>
-        <ol class="howto">
-          <li><b>The Master</b> secretly gets the true title of a lost masterpiece.</li>
-          <li><b>Everyone else</b> only sees a vague catalogue entry, and paints a forgery anyway.</li>
-          <li><b>Bid guineas</b> on the painting you think is the genuine one.</li>
-          <li><b>Fool buyers</b> to pocket their money. The Master only scores if some, but not all, spot theirs.</li>
-        </ol>
+        <h1 class="lobby-welcome">Welcome to the Gallery</h1>
+        <h2>Join the exhibition</h2>
+        <div class="join-essentials">
+          <img id="joinQr" class="join-qr" src="/qr?code=${encodeURIComponent(S.code)}" alt="Scan to open the phone join page with this gallery code" width="220" height="220">
+          <div>
+            <p class="code-intro">Gallery code</p>
+            <div class="code" aria-label="Gallery code ${S.code}">${S.code.split('').map(c => `<span>${c}</span>`).join('')}</div>
+            <p class="join-lead">Or open:</p>
+            <p class="join-url">${esc(location.host)}</p>
+          </div>
+        </div>
+        <p class="settings-line"><span class="collection ${isAdult() ? 'after' : ''}">${isAdult() ? 'After Hours · 18+' : 'Family collection'}</span></p>
+        <p class="settings-line">${S.settings.drawTime} seconds to paint · Each player is Master ${S.settings.laps === 1 ? 'once' : 'twice'}</p>
+        <p class="join-instructions">Paint a masterpiece or forge one. Bid on the genuine painting, admire your favourite and win guineas. For full instructions, choose <b>How to Play</b>.</p>
       </div>
       <div class="wall-wrap">
+        <h2 class="wall-heading">Tonight’s questionable reputations</h2>
         <div class="wall">${slots}</div>
         <p class="lobby-status">${status}</p>
       </div>
@@ -544,14 +575,15 @@ body.after #badge { display: flex; }
       view.innerHTML = `<section class="auction"><p class="hanging">Hanging the paintings…</p></section>`;
       return;
     }
-    const two = lotList.length > 4;
+    const count = lotList.length;
+    const { columns: cols, rows } = FF.galleryGrid(Math.max(1, count));
     view.innerHTML = `<section class="auction">
       <div class="auction-head">
         <div class="tr"><p class="tr-label">The genuine painting is titled</p><h1 class="tr-title ${S.title.length > 48 ? 'long' : ''}">“${esc(S.title)}”</h1></div>
         <div class="bidders" id="bidders"></div>
         ${timerHTML()}
       </div>
-      <div class="lots ${two ? 'two-rows' : ''}">${lotList.map(l => frameHTML(l.letter)).join('')}</div>
+      <div class="lots ${rows > 1 ? 'two-rows' : ''}" data-lots="${count}" style="--lot-cols:${cols};--lot-rows:${rows}">${lotList.map(l => frameHTML(l.letter)).join('')}</div>
     </section>`;
     renderBidders();
     FF.paintAll(view, lots);
@@ -559,11 +591,11 @@ body.after #badge { display: flex; }
   function renderBidders() {
     const el = $('#bidders'); if (!el) return;
     el.innerHTML = S.players.filter(p => p.id !== S.masterId).map(p =>
-      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? '<span class="paddle">✓</span>' : ''}</span>`
+      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? `<span class="paddle" title="${p.passed ? 'Passed' : 'Bid'}">${p.passed ? 'P' : '✓'}</span>` : ''}</span>`
     ).join('');
   }
 
-  /* ---------- Reveal ---------- */
+  /* ---------- Reveal: original gilt frame with honest, itemised transfers ---------- */
   function revealOrder() {
     const r = S.results;
     const forg = r.lots.filter(l => !l.genuine).sort((a, b) => a.buyers.length - b.buyers.length);
@@ -574,57 +606,60 @@ body.after #badge { display: flex; }
     const steps = revealOrder().length;
     const total = steps * S.results.stepMs + S.results.tailMs;
     revealStart = Date.now() - Math.max(0, total - S.timeLeft);
-    view.innerHTML = `<section id="revealRoot" style="height:100%"></section>`;
+    view.innerHTML = `<section id="revealRoot" class="reveal-stage" aria-live="polite"></section>`;
     revealTick();
   }
   function revealTick() {
     if (!S || S.phase !== 'reveal' || !S.results || lotsRound !== S.round) return;
     const r = S.results, order = revealOrder();
-    const elapsed = Date.now() - revealStart;
+    const elapsed = Math.max(0, Date.now() - revealStart);
     const step = Math.floor(elapsed / r.stepMs);
     const sub = (elapsed % r.stepMs) > 1600 ? 1 : 0;
     const key = step >= order.length ? 'tail' : `${step}:${sub}`;
     if (key === revealShown) return;
     revealShown = key;
     const root = $('#revealRoot'); if (!root) return;
-
     if (key === 'tail') { renderFavourite(root); FF.sfx('applause'); return; }
     const lot = order[step];
+    if (!lot) return;
     const owner = player(lot.ownerId);
     const buyerChips = lot.buyers.map(b => {
       const p = player(b.id);
-      return `<span class="v-buyer">${FF.avatar(p.avatar, p.name, 'sm')}${esc(p.name)}, ${FF.money(b.amount)}</span>`;
+      return `<span class="v-buyer">${FF.avatar(p.avatar, p.name, 'sm')}<span>${esc(p.name)} <b>${FF.money(b.amount)}</b></span></span>`;
     }).join('');
+    const buyers = lot.buyers.length ? `<div class="v-buyers">${buyerChips}</div>` : '<p class="v-empty">No bids on this painting.</p>';
     let info;
     if (!sub) {
-      info = `<p class="v-lot">Lot ${lot.letter}</p><p class="v-q">Genuine, or forgery?</p>
-        ${lot.buyers.length ? `<p class="v-line">Bought by</p><div class="v-buyers">${buyerChips}</div>` : `<p class="v-line">Nobody bid on this one.</p>`}`;
+      info = `<p class="v-kicker">The auction house investigates</p><p class="v-lot">Lot ${esc(lot.letter)} · ${step + 1} of ${order.length}</p>
+        <h2 class="v-q">Genuine or forgery?</h2><p class="v-line">${lot.buyers.length ? 'The collectors placed their bids:' : 'A painting without a single bid.'}</p>${buyers}
+        <p class="v-note">Lord Gavelby is about to deliver the verdict.</p>`;
     } else if (!lot.genuine) {
-      const take = lot.buyers.reduce((n, b) => n + b.amount, 0);
-      info = `<p class="v-lot">Lot ${lot.letter}</p>
-        <div class="v-who">${FF.avatar(owner.avatar, owner.name, 'lg')}<div><p class="v-line">A forgery by</p><p class="nm">${esc(owner.name)}</p></div></div>
-        ${lot.buyers.length
-          ? `<div class="v-buyers">${buyerChips}</div><p class="v-line">${esc(owner.name)} pockets <span class="plus">${FF.money(take)}</span> from the gullible.</p>`
-          : `<p class="v-line">Nobody fell for it. Back to art school, ${esc(owner.name)}.</p>`}`;
+      const paid = (r.transfers || []).filter(t => t.to === lot.ownerId).reduce((sum, t) => sum + t.amount, 0);
+      const ledger = lot.buyers.map(b => `<li>${esc(player(b.id).name)} <span class="minus">−${FF.money(b.amount)}</span><span class="v-to">to ${esc(owner.name)}</span></li>`).join('');
+      info = `<p class="v-kicker">Authenticity verdict</p><p class="v-lot">Lot ${esc(lot.letter)} · FORGERY</p>
+        <div class="v-who">${FF.avatar(owner.avatar, owner.name, 'lg')}<div><p class="v-line">Painted by</p><p class="nm">${esc(owner.name)}</p></div></div>
+        <p class="v-total">${paid ? `<span class="plus">+${FF.money(paid)}</span> earned from fooled collectors` : 'No one was fooled. No guineas changed hands.'}</p>
+        ${ledger ? `<ul class="v-transfers" aria-label="Actual guinea transfers">${ledger}</ul>` : '<p class="v-note">A forgery with no buyers earns nothing.</p>'}`;
     } else {
-      const v = {
-        perfect: `${r.correct} sharp-eyed ${r.correct === 1 ? 'collector' : 'collectors'} found it. ${esc(owner.name)} earns ${FF.money(r.masterEarned)}.`,
-        obvious: `Everyone spotted it. Far too obvious, ${esc(owner.name)}. No fee for you.`,
-        obscure: `Nobody spotted it. Far too obscure, ${esc(owner.name)}. No fee for you.`,
-        nobids: 'Nobody bid at all. The auction house weeps quietly.',
-      }[r.verdict];
-      info = `<p class="v-lot">Lot ${lot.letter}</p>
-        <div class="v-who">${FF.avatar(owner.avatar, owner.name, 'lg')}<div><p class="v-line">The genuine article, by</p><p class="nm">${esc(owner.name)}</p></div></div>
-        ${lot.buyers.length ? `<div class="v-buyers">${buyerChips}</div><p class="v-line">Every buyer gets their bid back in profit.</p>` : ''}
-        <p class="v-verdict">${v}</p>`;
+      const explanations = {
+        perfect: `Some, but not all, bidders found the genuine work. ${esc(owner.name)} earns ${FF.money(r.masterEarned)} as Master.`,
+        obvious: `Every real bid found the genuine work. No Master bonus this time.`,
+        obscure: `No real bid found the genuine work. No Master bonus this time.`,
+        nobids: 'Nobody bid. No Master bonus is awarded.',
+      };
+      const wins = lot.buyers.map(b => `<li>${esc(player(b.id).name)} <span class="plus">+${FF.money(b.amount)}</span><span class="v-to">correct-bid bonus</span></li>`).join('');
+      info = `<p class="v-kicker">Authenticity verdict</p><p class="v-lot">Lot ${esc(lot.letter)} · GENUINE</p>
+        <div class="v-who">${FF.avatar(owner.avatar, owner.name, 'lg')}<div><p class="v-line">The true work of</p><p class="nm">${esc(owner.name)}</p></div></div>
+        ${wins ? `<ul class="v-transfers" aria-label="Correct bid bonuses">${wins}</ul>` : '<p class="v-empty">No correct bids on this genuine work.</p>'}
+        <p class="v-verdict">${explanations[r.verdict] || 'The verdict is in.'}</p>`;
     }
-    root.innerHTML = `<div class="reveal">
-      <div class="spot">${frameHTML(lot.letter, sub && lot.genuine ? 'genuine' : '')}</div>
-      <div class="verdict">${info}</div></div>`;
+    root.innerHTML = `<div class="reveal reveal-b"><div class="spot">${frameHTML(lot.letter, sub && lot.genuine ? 'genuine' : '')}</div>
+      <article class="verdict">${info}</article></div>`;
     if (sub) {
-      root.querySelector('.frame').insertAdjacentHTML('beforeend', stampHTML(lot.genuine));
+      const frame = root.querySelector('.frame');
+      if (frame) frame.insertAdjacentHTML('beforeend', stampHTML(lot.genuine));
       FF.sfx(lot.genuine ? 'stamp-genuine' : 'stamp-forgery');
-      setHost(!lot.genuine && lot.buyers.length > 0 ? 'auctioneer-shock' : 'auctioneer');
+      setHost(!lot.genuine && lot.buyers.length ? 'auctioneer-shock' : 'auctioneer');
     } else FF.sfx('drumroll');
     FF.paintAll(root, lots);
   }
@@ -633,31 +668,43 @@ body.after #badge { display: flex; }
     setHost('auctioneer');
     const winners = r.lots.filter(l => r.heartWinners.includes(l.letter));
     const master = player(r.masterId);
-    const body = winners.length ? `<div class="row">${winners.map(l => {
-      const p = player(l.ownerId);
-      return `<div class="pick"><div style="position:relative;height:440px">${frameHTML(l.letter)}
-        <span class="rosette"><em>🏵️</em><img src="/assets/rosette.png" alt="" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"></span></div>
-        <p class="who">${esc(p.name)}, ${l.hearts} ${l.hearts === 1 ? 'admirer' : 'admirers'}, <span style="color:var(--good)">+100 gns</span></p></div>`;
-    }).join('')}</div>` : `<p class="none">Nobody handed out a rosette this round. Tough crowd.</p>`;
-    root.innerHTML = `<div class="fav"><h2>People’s Favourite</h2>${body}
-      <p class="v-line">The true title was <i style="color:var(--brass-hi)">“${esc(S.title)}”</i>, by ${esc(master.name)}.</p></div>`;
+    let body;
+    if (winners.length) {
+      const { columns, rows } = FF.galleryGrid(winners.length);
+      body = `<div class="fav-grid" style="--fav-cols:${columns};--fav-rows:${rows}" data-winners="${winners.length}">${winners.map(l => {
+        const p = player(l.ownerId);
+        return `<div class="pick"><div class="fav-art">${frameHTML(l.letter)}
+          <span class="rosette"><em>🏵️</em><img src="/assets/rosette.png" alt="People's Favourite" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"></span></div>
+          <p class="who">${esc(p.name)} · ${l.hearts} ${l.hearts === 1 ? 'heart' : 'hearts'} <b>+100 gns</b></p></div>`;
+      }).join('')}</div>`;
+    } else body = '<p class="none">No hearts awarded this round. No favourite bonus.</p>';
+    root.innerHTML = `<div class="fav fav-b"><p class="v-kicker">The audience has spoken</p><h2>People’s Favourite</h2>${body}
+      <p class="fav-truth">The true title was <i>“${esc(S.title)}”</i>, by ${esc(master.name)}.</p></div>`;
     FF.paintAll(root, lots);
   }
 
-  /* ---------- Scores ---------- */
+  /* ---------- Ledger: derived only from server-settled round results ---------- */
   function scores() {
-    const r = S.results || { deltas: {} };
-    const ranked = [...S.players].sort((a, b) => b.score - a.score);
+    const r = S.results || { deltas: {}, transfers: [], lots: [], heartWinners: [], masterEarned: 0 };
+    const ranked = FF.roundLedger(S.players, r);
     const last = S.round >= S.totalRounds;
-    view.innerHTML = `<section class="scores">
-      <h2>The ledger</h2>
-      <div class="ledger">${ranked.map((p, i) => {
-        const d = r.deltas[p.id] || 0;
-        return `<div class="row" style="animation-delay:${i * 80}ms"><span class="rank">${i + 1}</span>${FF.avatar(p.avatar, p.name, 'sm')}
-          <span class="nm">${esc(p.name)}</span><span class="sc">${FF.money(p.score)}</span>
-          <span class="dl ${d > 0 ? 'up' : d < 0 ? 'down' : 'flat'}">${FF.signed(d)}</span></div>`;
-      }).join('')}</div>
-      <p class="next">${last ? 'The final reckoning' : 'Next lot'} in <span data-timer></span> seconds.</p>
+    const makeItem = (label, value) => value ? `<span class="ledger-chip ${value < 0 ? 'cost' : 'gain'}">${label} <b>${FF.signed(value)}</b></span>` : '';
+    view.innerHTML = `<section class="scores scores-b">
+      <header class="ledger-head"><div><p class="ledger-eyebrow">Lot ${S.round} of ${S.totalRounds}</p><h2>The Guinea Ledger</h2></div>
+        <p class="ledger-guide">Every change comes from the settled auction. Amounts are guineas, not bid units.</p></header>
+      <div class="ledger" data-count="${ranked.length}">${ranked.map((entry, i) => {
+        const p = entry.player, b = entry.breakdown, d = entry.delta;
+        const lines = [makeItem('Correct bid', b.genuine), makeItem('Forgery takings', b.forgeryIn),
+          makeItem('Paid for forgery', -b.forgeryOut), makeItem('Master bonus', b.master),
+          makeItem('Favourite', b.favourite)].filter(Boolean).join('');
+        return `<div class="row ledger-entry" style="animation-delay:${i * 55}ms">
+          <div class="ledger-primary"><span class="rank">${i + 1}</span>${FF.avatar(p.avatar, p.name, 'sm')}
+            <span class="nm">${esc(p.name)}</span><span class="ledger-total">${FF.money(entry.after)}</span>
+            <span class="dl ${d > 0 ? 'up' : d < 0 ? 'down' : 'flat'}">${FF.signed(d)} gns</span></div>
+          <div class="ledger-detail"><span class="ledger-before">Before: ${FF.money(entry.before)}</span>${lines || '<span class="ledger-zero">No guinea change this round</span>'}
+            ${entry.consistent ? '' : '<strong class="ledger-alert">Ledger discrepancy — check server settlement</strong>'}</div>
+        </div>`;
+      }).join('')}</div><p class="next">${last ? 'The final reckoning' : 'Next lot'} in <span data-timer></span> seconds.</p>
     </section>`;
   }
 
@@ -670,50 +717,90 @@ body.after #badge { display: flex; }
     view.innerHTML = `<section class="void"><h1>Lot withdrawn</h1><p>${why}</p><p>On to the next lot.</p></section>`;
   }
 
-  /* ---------- Final ---------- */
+  /* ---------- The Grand Reckoning: originals, never substituted ---------- */
+  const AW = {
+    forger: ['Master Forger', '🖌️', v => `Pocketed ${FF.money(v)} from the gullible.`],
+    gullible: ['Most Generous Collector', '💸', v => `Spent ${FF.money(v)} on fakes.`],
+    favourite: ['People’s Favourite', '🏵️', v => `Won ${v} ${v === 1 ? 'rosette' : 'rosettes'}.`],
+    eagle: ['Eagle Eye', '🔍', v => `Spotted ${v} genuine ${v === 1 ? 'work' : 'works'}.`],
+  };
   function final() {
     const f = S.final;
     if (!f) return;
-    const byId = id => player(id);
     const top = f.ranking.slice(0, 3);
     const podOrder = [top[1], top[0], top[2]].filter(Boolean);
     const place = r => f.ranking.indexOf(r) + 1;
-    const AW = {
-      forger: ['Master Forger', '🖌️', v => `Pocketed ${FF.money(v)} from the gullible.`],
-      gullible: ['Most Generous Collector', '💸', v => `Spent ${FF.money(v)} on fakes.`],
-      favourite: ['People’s Favourite', '🏵️', v => `Won ${v} ${v === 1 ? 'rosette' : 'rosettes'}.`],
-      eagle: ['Eagle Eye', '🔍', v => `Spotted ${v} genuine ${v === 1 ? 'work' : 'works'}.`],
-    };
-    view.innerHTML = `<section class="final">
-      <div>
+    view.innerHTML = `<section class="final final-b" aria-label="Tonight’s grand reckoning">
+      <div class="ceremony">
+        <header class="ceremony-head"><p class="ledger-eyebrow">The last gavel falls</p><h1>Tonight’s Grand Reckoning</h1></header>
         <div class="podium">${podOrder.map(r => {
-          const p = byId(r.id), n = place(r);
-          return `<div class="pod p${n}">${FF.avatar(p.avatar, p.name, n === 1 ? 'lg' : '')}<span class="nm">${esc(p.name)}</span>
-            <span class="sc">${FF.money(r.score)}</span><div class="block">${n}</div></div>`;
+          const p = player(r.id), n = place(r);
+          return `<div class="pod p${n}">${FF.avatar(p.avatar, p.name, n === 1 ? 'lg' : '')}
+            <span class="nm">${esc(p.name)}</span><span class="sc">${FF.money(r.score)}</span>
+            <div class="block" aria-label="Place ${n}">${n}</div></div>`;
         }).join('')}</div>
-        ${f.ranking.length > 3 ? `<div class="rest">${f.ranking.slice(3).map((r, i) => `<span>${i + 4}. ${esc(byId(r.id).name)}, ${FF.money(r.score)}</span>`).join('')}</div>` : ''}
-        <div class="awards">${f.awards.map(a => {
-          const [t, icon, d] = AW[a.key]; const p = byId(a.id);
-          return `<div class="award"><span class="medal"><em>${icon}</em><img src="/assets/award-${a.key}.png" alt="" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"></span>
-            <div><p class="t">${t}: ${esc(p.name)}</p><p class="d">${d(a.value)}</p></div></div>`;
-        }).join('')}</div>
+        ${f.ranking.length > 3 ? `<div class="rest">${f.ranking.slice(3).map((r, i) => `<span>${i + 4}. ${esc(player(r.id).name)} · ${FF.money(r.score)}</span>`).join('')}</div>` : ''}
+        <div class="awards" aria-label="Special awards">${(f.awards || []).map(a => {
+          const info = AW[a.key]; if (!info) return '';
+          const [t, icon, d] = info, p = player(a.id);
+          return `<div class="award"><span class="medal"><em>${icon}</em><img src="/assets/award-${a.key}.png" alt="${esc(t)} medal" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"></span>
+            <div class="award-copy"><p class="t">${esc(t)}</p><p class="award-winner">${esc(p.name)}</p><p class="d">${esc(d(a.value))}</p></div></div>`;
+        }).join('') || '<p class="award-empty">No special awards this time.</p>'}</div>
       </div>
-      <div class="gallery" id="gallery"></div>
+      <section class="gallery gallery-b" id="gallery" aria-label="Gallery of genuine masterpieces">
+        <h3>Tonight’s Genuine Masterpieces</h3>
+        <div class="gallery-slide" id="gallerySlide" aria-live="polite"></div>
+        <div class="gallery-controls"><button type="button" data-gallery-nav="previous" aria-label="Previous genuine painting">◀ Previous</button>
+          <span class="gallery-count" id="galleryCount"></span>
+          <button type="button" data-gallery-nav="next" aria-label="Next genuine painting">Next ▶</button>
+          <button type="button" data-gallery-nav="toggle" id="galleryPause" aria-pressed="false">Pause gallery</button></div>
+      </section>
     </section>`;
     galleryIdx = 0;
-    showGallery();
-    if (f.gallery.length > 1) galleryTimer = setInterval(showGallery, 6000);
+    galleryPaused = false;
+    showGallery(0);
+    runGalleryTimer();
   }
-  function showGallery() {
-    const g = S.final && S.final.gallery;
-    const el = $('#gallery'); if (!el || !g || !g.length) return;
-    const item = g[galleryIdx % g.length]; galleryIdx++;
-    el.innerHTML = `<h3>Tonight’s genuine masterpieces</h3>
-      <figure class="frame" style="height:560px"><div class="frame-inner"><canvas id="galCanvas"></canvas></div>
-        <img class="frame-img" src="/assets/frame-gilt.png" alt="" onerror="this.remove()"></figure>
-      <p class="cap"><i>“${esc(item.title)}”</i><br>by ${esc(item.masterName)}</p>`;
-    requestAnimationFrame(() => FF.paint($('#galCanvas'), item.strokes));
+  function runGalleryTimer() {
+    clearInterval(galleryTimer); galleryTimer = null;
+    if (!S || S.phase !== 'final' || galleryPaused || !S.final || S.final.gallery.length < 2) return;
+    galleryTimer = setInterval(() => {
+      if (S && S.phase === 'final') showGallery(1);
+    }, 7000);
   }
+  function showGallery(change = 0) {
+    const g = S && S.final && S.final.gallery;
+    const el = $('#gallerySlide'); if (!el || !g) return;
+    if (!g.length) {
+      el.innerHTML = '<p class="gallery-empty">No genuine paintings were submitted tonight.</p>';
+      const count = $('#galleryCount'); if (count) count.textContent = '0 of 0';
+      return;
+    }
+    galleryIdx = (galleryIdx + change + g.length) % g.length;
+    const item = g[galleryIdx];
+    el.innerHTML = `<figure class="frame gallery-frame" aria-label="Genuine painting ${galleryIdx + 1}">
+      <div class="frame-inner"><canvas id="galCanvas" aria-label="Painting from this evening"></canvas></div>
+      <img class="frame-img" src="/assets/frame-gilt.png" alt="Original gilt picture frame" onerror="this.remove()"></figure>
+      <p class="cap"><i>“${esc(item.title)}”</i><span>by ${esc(item.masterName)}</span></p>`;
+    const count = $('#galleryCount'); if (count) count.textContent = `${galleryIdx + 1} of ${g.length}`;
+    requestAnimationFrame(() => {
+      const canvas = $('#galCanvas');
+      if (canvas && $('#gallerySlide') === el) FF.paint(canvas, item.strokes);
+    });
+  }
+  view.addEventListener('click', e => {
+    const btn = e.target.closest('[data-gallery-nav]');
+    if (!btn || !S || S.phase !== 'final') return;
+    const action = btn.dataset.galleryNav;
+    if (action === 'toggle') {
+      galleryPaused = !galleryPaused;
+      btn.textContent = galleryPaused ? 'Play gallery' : 'Pause gallery';
+      btn.setAttribute('aria-pressed', String(galleryPaused));
+    } else {
+      showGallery(action === 'next' ? 1 : -1);
+    }
+    runGalleryTimer();
+  });
 
   /* ---------- Clock: timers, ticks and the reveal sequence ---------- */
   setInterval(() => {

@@ -1,0 +1,193 @@
+/* FORGER'S FINGER — Approved Stage 6, Batch A.
+   Responsive TV shell, lobby and painting gallery. No gameplay/asset changes. */
+:root { --tv-gutter: clamp(24px, 4.6vw, 100px); --tv-gold: #f2d58b; }
+html, body { width:100%; height:100%; min-height:100%; overflow:hidden; }
+#stage { position:relative; top:auto;left:auto; width:100%; height:100vh; height:100dvh;
+  overflow:hidden; transform:none !important; }
+#top { left:var(--tv-gutter);right:var(--tv-gutter);top:clamp(10px,1.65vh,25px);
+  height:clamp(77px,14vh,155px);gap:clamp(8px,1.2vw,22px);min-width:0; }
+.logo { height:100%; min-width:0; flex:0 1 auto; }
+.logo img {height:auto;max-height:100%;max-width:min(25vw,410px);object-fit:contain;}
+.logo .logo-text {font-size:clamp(22px,3vw,54px);}
+#round {font-size:clamp(17px,1.65vw,34px);white-space:nowrap;}
+.chip {font-size:clamp(15px,1.3vw,26px);padding:.4em .8em;white-space:nowrap;}
+#badge,#badge img { height:clamp(42px,5vh,70px); min-width:0; }
+#soundBtn,#audioOptions,#helpBtn { border:1px solid #b79548;border-radius:28px;
+  background:rgba(7,13,25,.82);color:#f7e5b7;font:700 clamp(13px,1vw,19px) var(--body);
+  white-space:nowrap;padding:clamp(7px,.65vw,13px) clamp(10px,1vw,18px);cursor:pointer; }
+#soundBtn:focus-visible,#audioOptions:focus-visible,#helpBtn:focus-visible {outline:3px solid var(--tv-gold);outline-offset:3px;}
+#view { left:var(--tv-gutter);right:var(--tv-gutter);top:clamp(95px,16.5vh,183px);
+  bottom:clamp(105px,14vh,155px);min-width:0;min-height:0; }
+#host {left:var(--tv-gutter);bottom:clamp(8px,1.5vh,22px);gap:clamp(8px,.8vw,18px);
+  max-width:min(70vw,1240px);max-height:clamp(75px,12vh,135px);align-items:center;}
+.host-portrait {width:clamp(68px,9.1vh,130px);height:clamp(68px,9.1vh,130px);}
+.host-portrait img {width:100%;height:100%;}
+.host-portrait .host-fallback {inset:10%;font-size:clamp(32px,4vw,65px);}
+#quip {font-size:clamp(14px,1.15vw,24px);margin-bottom:0;padding:clamp(7px,.9vw,15px) clamp(10px,1.2vw,22px);
+  max-height:clamp(72px,11vh,125px);overflow:hidden;}
+#quip .who {font-size:clamp(12px,.9vw,18px);}
+#ctl {right:var(--tv-gutter);bottom:clamp(17px,3.3vh,50px);font-size:clamp(16px,1.3vw,27px);
+  padding:clamp(10px,.9vw,18px) clamp(14px,1.8vw,36px);color:#251911;
+  background:linear-gradient(#ffe7a3,#caa04c);border:2px solid #f3d68b;
+  box-shadow:0 5px 20px rgba(0,0,0,.55);}
+#ctl:hover,#ctl:focus-visible {color:#fff;background:var(--oxblood);}
+#toast {top:12vh;font-size:clamp(15px,1.45vw,28px);max-width:80vw;}
+
+/* Lobby: fixed 4 x 2 suspect wall and compact, readable genuine joining QR. */
+.lobby {grid-template-columns:minmax(0,0.39fr) minmax(0,0.61fr);gap:clamp(12px,1.5vw,32px);height:100%;min-height:0;}
+.join-card {padding:clamp(13px,1.3vw,27px);border-width:2px;border-radius:14px;overflow:hidden;
+  background:rgba(4,11,23,.86);box-shadow:0 12px 36px rgba(0,0,0,.35);}
+.lobby-welcome {font-family:var(--display);font-size:clamp(22px,2.1vw,44px);
+  line-height:1.05;color:var(--tv-gold);margin-bottom:clamp(10px,1.4vh,20px);}
+.join-card h2 {font:700 clamp(15px,1.1vw,22px) var(--body);letter-spacing:.08em;color:var(--tv-gold);margin-bottom:clamp(9px,1.2vh,16px);}
+.join-card .join-lead {font-size:clamp(13px,1.05vw,21px);}
+.join-card .join-url {font-size:clamp(17px,1.6vw,30px);line-height:1.15;margin:0 0 6px;overflow-wrap:anywhere;}
+.join-essentials {display:grid;grid-template-columns:minmax(88px,.68fr) minmax(0,1.2fr);gap:clamp(12px,1.2vw,24px);align-items:center;}
+.join-qr {width:100%;max-width:clamp(110px,12.5vw,225px);aspect-ratio:1;object-fit:contain;
+  height:auto;padding:clamp(5px,.5vw,9px);background:#fff;border:2px solid #fff;border-radius:4px;}
+.join-card .code {display:flex;gap:clamp(3px,.4vw,8px);margin:5px 0 8px;}
+.join-card .code span {width:auto;min-width:0;height:auto;
+  font-size:clamp(31px,4.1vw,79px);line-height:1.05;background:none;box-shadow:none;
+  border-radius:0;color:var(--tv-gold);font-weight:700;}
+.join-card .code-intro {font:700 clamp(14px,1vw,20px) var(--body);color:var(--tv-gold);}
+.join-card .settings-line {font-size:clamp(13px,1.1vw,20px);line-height:1.3;margin:clamp(9px,1.3vh,15px) 0 0;}
+.join-card .collection {font-size:clamp(13px,1.1vw,20px);padding:.28em .7em;}
+.join-instructions {font-size:clamp(12px,.92vw,18px);line-height:1.35;
+  border-top:1px solid rgba(231,193,108,.55);margin-top:clamp(9px,1.7vh,19px);padding-top:clamp(7px,1.5vh,15px);}
+.wall-wrap {min-height:0;overflow:hidden;}
+.wall-heading {font:400 clamp(22px,2vw,40px) var(--display);color:var(--tv-gold);
+  text-align:center;line-height:1.1;margin-bottom:clamp(7px,1vh,15px);}
+.wall {flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(7px,.8vw,17px);}
+.slot {height:auto;min-height:0;gap:clamp(4px,.7vh,9px);padding:clamp(4px,.6vw,11px);
+  border-width:2px;border-radius:10px;background:rgba(4,13,25,.76);}
+.slot.empty {border-width:2px;}
+.slot.empty span {font-size:clamp(12px,1vw,18px);text-align:center;}
+.slot .av {width:auto;height:auto;aspect-ratio:1;width:min(9vw,17vh,165px);max-width:88%;flex:0 1 auto;
+  border-width:clamp(2px,.25vw,5px);}
+.slot .av b {font-size:clamp(32px,3.1vw,66px);}
+.slot-name {font-size:clamp(12px,1.25vw,24px);line-height:1.2;text-align:center;max-width:100%;}
+.slot-status {font:700 clamp(10px,.85vw,16px) var(--body);color:var(--tv-gold);text-transform:uppercase;line-height:1.1;}
+.slot .tag {font-size:clamp(10px,.9vw,16px);top:0;border-radius:0 0 7px 7px;padding:2px 6px;}
+.lobby-status {margin-top:clamp(8px,1.3vh,19px);font-size:clamp(16px,1.4vw,28px);line-height:1.2;}
+
+/* Paintings are sized by available grid height, not a fixed 465/300px rule. */
+.auction {height:100%;min-height:0;gap:clamp(10px,1.7vh,22px);}
+.auction-head {flex:none;min-height:0;max-height:clamp(70px,13vh,140px);gap:clamp(9px,1.5vw,24px);}
+.tr-label {font-size:clamp(13px,1.3vw,25px);}
+.tr-title,.tr-title.long {font-size:clamp(24px,3vw,58px);line-height:1.06;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.auction-head .timer {width:clamp(63px,8vw,118px);height:clamp(63px,8vw,118px);}
+.auction-head .timer span {font-size:clamp(22px,2.8vw,48px);}
+.bidders {gap:clamp(3px,.45vw,8px);max-width:min(24vw,375px);}
+.bidder .av {width:clamp(30px,3.25vw,59px);height:clamp(30px,3.25vw,59px);border-width:2px;}
+.bidder .av b {font-size:clamp(16px,1.4vw,25px);}
+.lots,.lots.two-rows {display:grid;flex:1;min-height:0;
+  grid-template-columns:repeat(var(--lot-cols,4),minmax(0,1fr));
+  grid-template-rows:repeat(var(--lot-rows,2),minmax(0,1fr));
+  gap:clamp(27px,3vh,42px) clamp(8px,1.1vw,23px);justify-items:center;align-items:center;
+  justify-content:stretch;align-content:stretch;overflow:visible;padding:2px 0 clamp(13px,1.4vh,20px);}
+.lots .frame,.lots.two-rows .frame {width:auto;height:100%;max-width:100%;max-height:100%;
+  min-height:0;margin:0;aspect-ratio:3/4;justify-self:center;align-self:center;}
+.lots .frame .plaque,.lots.two-rows .frame .plaque {font-size:clamp(12px,1.12vw,23px);
+  line-height:1.1;padding:4px clamp(8px,.9vw,17px);bottom:clamp(-23px,-1.4vw,-14px);}
+.lots[data-lots="3"] .frame {max-height:94%;}
+.lots .frame-inner canvas {height:100%;object-fit:contain;}
+
+@media (max-width:1100px), (max-height:680px) {
+  :root {--tv-gutter:3vw;}
+  #view {top:clamp(80px,15vh,120px);bottom:clamp(82px,13vh,105px);}
+  #host {max-width:64vw;}
+  #quip {font-size:clamp(12px,1.45vw,17px);}
+  #ctl {font-size:clamp(14px,1.5vw,20px);padding:9px 13px;}
+  .join-card {padding:10px;}
+  .join-card .code span {width:4vw;height:4.7vw;min-height:32px;font-size:clamp(22px,3vw,45px);}
+  .join-instructions {font-size:11px;}
+  .wall-heading {font-size:clamp(17px,2vw,26px);}
+  .slot .av {width:min(8vw,14vh);}
+  .lobby-status {font-size:16px;}
+}
+@media (max-width:760px) {
+  #top {gap:5px;}
+  #soundBtn,#audioOptions,#helpBtn {font-size:11px;padding:5px 6px;}
+  #round {display:none;}
+  .lobby {grid-template-columns:.37fr .63fr;gap:7px;}
+  .join-essentials {grid-template-columns:1fr;justify-items:start;gap:2px;}
+  .join-qr {max-width:75px;}
+  .join-card .join-url {font-size:14px;}
+  .join-instructions {display:none;}
+  .slot-name {font-size:10px;}
+  .slot .av {width:min(7vw,13vh);}
+}
+
+/* Interim responsive guardrails for other legacy phases. Their full visual
+   overhaul belongs to Batch B; do not allow Batch A's fluid shell to clip them. */
+.intro {gap:clamp(12px,2vh,24px);overflow:auto;}
+.intro h1 {font-size:clamp(34px,5vw,82px);}
+.intro .lotno {font-size:clamp(19px,2vw,31px);}
+.intro .sub {font-size:clamp(17px,1.9vw,30px);}
+.master-card {padding:clamp(10px,1.4vw,22px) clamp(14px,2.4vw,36px);gap:clamp(10px,2vw,30px);}
+.master-card .mname {font-size:clamp(27px,3vw,55px);}
+.master-card .lab {font-size:clamp(15px,1.5vw,25px);}
+.master-card .av {width:clamp(65px,9vw,140px);height:clamp(65px,9vw,140px);}
+.draw {grid-template-columns:minmax(0,1fr) clamp(60px,10vw,155px);grid-template-rows:auto minmax(0,1fr);gap:clamp(8px,1.5vw,23px);}
+.cat-plaque {padding:clamp(12px,1.9vw,28px);border-width:clamp(2px,.3vw,5px);min-width:0;}
+.cat-genre {font-size:clamp(16px,1.8vw,29px);}
+.cat-text {font-size:clamp(30px,3.9vw,68px);line-height:1.06;overflow-wrap:anywhere;}
+.cat-note {font-size:clamp(14px,1.35vw,23px);}
+.draw .timer {width:clamp(55px,8vw,140px);height:clamp(55px,8vw,140px);}
+.draw .timer span {font-size:clamp(22px,3vw,52px);}
+.easels {gap:clamp(7px,1vw,19px);align-content:start;overflow:auto;}
+.easel {width:clamp(104px,11vw,190px);padding:clamp(8px,.9vw,16px);}
+.easel .name {font-size:clamp(13px,1.2vw,22px);}
+.easel .st {font-size:clamp(12px,1.1vw,18px);}
+.easel .av {width:clamp(55px,5.5vw,96px);height:clamp(55px,5.5vw,96px);}
+.reveal {grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(14px,3vw,52px);}
+.reveal .spot {height:min(100%,58vh);min-height:0;}
+.reveal .spot .frame {height:100%;max-width:100%;}
+.verdict {min-width:0;max-height:100%;overflow:auto;}
+.v-lot {font-size:clamp(21px,2.8vw,48px);}
+.v-q {font-size:clamp(32px,4vw,75px);}
+.v-line {font-size:clamp(17px,1.9vw,31px);}
+.v-who .nm {font-size:clamp(29px,3.1vw,54px);}
+.v-who .av {width:clamp(60px,7vw,125px);height:clamp(60px,7vw,125px);}
+.v-buyer {font-size:clamp(14px,1.4vw,24px);}
+.v-verdict {font-size:clamp(22px,2.3vw,35px);}
+.fav {gap:clamp(7px,1vh,20px);overflow:auto;}
+.fav h2 {font-size:clamp(32px,4vw,70px);}
+.fav .row {gap:clamp(12px,2vw,38px);min-height:0;align-items:start;flex-wrap:wrap;}
+.fav .pick {height:auto;gap:clamp(7px,1vh,14px);}
+.fav .pick .frame {height:min(36vh,370px);}
+.fav .who {font-size:clamp(16px,1.6vw,29px);}
+.scores {gap:clamp(7px,1vh,16px);min-height:0;}
+.scores h2 {font-size:clamp(32px,3.3vw,62px);}
+.ledger {min-height:0;overflow:auto;gap:clamp(4px,.6vh,8px);}
+.ledger .row {grid-template-columns:clamp(22px,2.4vw,46px) clamp(35px,3.7vw,65px) minmax(0,1fr) auto clamp(70px,8vw,135px);
+  padding:clamp(2px,.35vw,6px) clamp(6px,1vw,16px);gap:clamp(6px,.8vw,15px);}
+.ledger .rank,.ledger .sc {font-size:clamp(20px,2.1vw,38px);}
+.ledger .nm {font-size:clamp(17px,1.75vw,30px);}
+.ledger .dl {font-size:clamp(15px,1.5vw,25px);min-width:0;}
+.ledger .av {width:clamp(35px,3.6vw,60px);height:clamp(35px,3.6vw,60px);}
+.scores .next {font-size:clamp(14px,1.4vw,25px);}
+.final {grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(15px,2vw,40px);min-height:0;overflow:hidden;}
+.final > div:first-child {min-height:0;overflow:auto;}
+.podium {height:min(39vh,430px);gap:clamp(7px,1vw,19px);}
+.pod {width:min(31%,205px);gap:clamp(2px,.5vw,9px);}
+.pod .nm {font-size:clamp(13px,1.4vw,25px);}
+.pod .sc {font-size:clamp(13px,1.2vw,21px);}
+.pod .block {font-size:clamp(33px,4vw,67px);}
+.pod.p1 .block {height:min(21vh,228px);}
+.pod.p2 .block {height:min(16vh,180px);}
+.pod.p3 .block {height:min(12vh,137px);}
+.pod .av {width:clamp(54px,7vw,130px);height:clamp(54px,7vw,130px);}
+.rest {font-size:clamp(12px,1.2vw,23px);margin-top:clamp(7px,1vh,20px);}
+.awards {gap:clamp(6px,.8vw,14px);margin-top:clamp(8px,1.1vh,18px);}
+.award {padding:clamp(5px,.7vw,12px);gap:clamp(5px,.8vw,12px);}
+.award .t {font-size:clamp(14px,1.2vw,23px);}
+.award .d {font-size:clamp(12px,1.1vw,19px);}
+.gallery {gap:clamp(9px,1.5vh,25px);min-height:0;}
+.gallery h3 {font-size:clamp(21px,2.25vw,42px);}
+.gallery .frame {height:min(46vh,480px)!important;max-width:100%;}
+.gallery .cap {font-size:clamp(16px,1.65vw,28px);}
+.void h1 {font-size:clamp(38px,6vw,88px);}
+.void p {font-size:clamp(18px,2.3vw,35px);}

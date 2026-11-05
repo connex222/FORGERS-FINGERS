@@ -1,0 +1,74 @@
+[
+  {
+    "eyebrow": "The invitation",
+    "title": "Welcome to FORGER’S FINGER",
+    "script": "Gather three to eight questionable art experts. The television is your gallery; each person paints and bids using their phone.",
+    "image": "/assets/logo.png",
+    "background": "/assets/bg-gallery.webp",
+    "label": "Gallery"
+  },
+  {
+    "eyebrow": "The Head Curator",
+    "title": "One curator, many dubious artists",
+    "script": "The first player is Head Curator. Pick the Family collection or After Hours for adults only, choose the painting time and decide whether everyone masters one or two lots.",
+    "image": "/assets/auctioneer.png",
+    "background": "/assets/bg-gallery.webp",
+    "label": "Curator"
+  },
+  {
+    "eyebrow": "The secret masterpiece",
+    "title": "Master or forger?",
+    "script": "On each lot, one player becomes the Master and sees the real painting title in secret. Everyone else gets only a vague catalogue description. Keep the secret off the television.",
+    "image": "/assets/frame-gilt.png",
+    "background": "/assets/bg-studio.webp",
+    "label": "Secret"
+  },
+  {
+    "eyebrow": "Paint your scandal",
+    "title": "Sign your masterpiece",
+    "script": "Use your phone as an easel. Choose colours and brush sizes, undo a mistake, wash or clear the canvas, then sign and submit. Your drawing remains on your device until the gallery confirms receipt.",
+    "image": "/assets/bg-studio.webp",
+    "background": "/assets/bg-studio.webp",
+    "label": "Paint"
+  },
+  {
+    "eyebrow": "The auction",
+    "title": "Which work is genuine?",
+    "script": "Once the paintings are hung, the true title is announced. Inspect every framed lot and decide which artist produced the genuine masterpiece.",
+    "image": "/assets/bg-auction.webp",
+    "background": "/assets/bg-auction.webp",
+    "label": "Auction"
+  },
+  {
+    "eyebrow": "Raise a paddle",
+    "title": "Bid only what you can afford",
+    "script": "Bid one hundred, two hundred, or three hundred guineas on another player’s painting. You must have enough guineas. If you cannot afford a bid, or do not wish to make one, choose Pass.",
+    "image": "/assets/auctioneer-shock.png",
+    "background": "/assets/bg-auction.webp",
+    "label": "Bids"
+  },
+  {
+    "eyebrow": "A little admiration",
+    "title": "One heart, one favourite",
+    "script": "Give one heart to a painting you admire, but not your own. You can still admire another work even after passing the auction. The most-loved painting wins one hundred guineas, with ties rewarded too.",
+    "image": "/assets/rosette.png",
+    "background": "/assets/bg-gallery.webp",
+    "label": "Hearts"
+  },
+  {
+    "eyebrow": "The truth comes out",
+    "title": "A genuine fortune or an expensive fake",
+    "script": "A correct genuine bid wins you the amount you bid. An incorrect bid transfers that amount from your purse to the actual forger. If some, but not all, real buyers spot the genuine work, the Master earns two hundred per correct buyer.",
+    "image": "/assets/stamp-forgery.png",
+    "background": "/assets/bg-auction.webp",
+    "label": "Reveal"
+  },
+  {
+    "eyebrow": "The grand reckoning",
+    "title": "Who leaves with the most guineas?",
+    "script": "After everyone has been Master once or twice, the richest artist wins. Lord Gavelby presents special awards, and the genuine masterpieces return for one final exhibition. Now, on with the forgery!",
+    "image": "/assets/award-forger.png",
+    "background": "/assets/bg-final.webp",
+    "label": "Awards"
+  }
+]
