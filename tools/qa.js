@@ -10,7 +10,7 @@ function run(name,exe,args){
  if(r.stderr)process.stderr.write(r.stderr);
  if(r.error||r.status!==0){failures++;console.error(`FAIL: ${name} (${r.error||r.status})`);}else console.log(`PASS: ${name}`);
 }
-for(const file of ['server.js','decks.js','public/shared.js','public/tutorial.js','lib/rules.js','lib/transport.js','lib/persistence.js','lib/qr.js'])run(`syntax ${file}`,process.execPath,['--check',file]);
+for(const file of ['server.js','decks.js','public/shared.js','public/tutorial.js','lib/rules.js','lib/transport.js','lib/persistence.js','lib/qr.js','lib/qr-png.js'])run(`syntax ${file}`,process.execPath,['--check',file]);
 for(const name of ['index.html','tv.html']){
  const html=fs.readFileSync(path.join(root,'public',name),'utf8');
  const src=html.slice(html.lastIndexOf('<script>')+8,html.lastIndexOf('</script>'));

@@ -27,10 +27,10 @@ test('TV layout is full viewport and QR/lobby controls are preserved',()=>{
   assert.match(tv,/href="\/tv-stage6\.css"/);
   assert.match(css,/#stage\s*\{[^}]*width:100%;\s*height:100vh;\s*height:100dvh/);
   assert.doesNotMatch(tv,/scale\(\$\{s\}\)/);
-  assert.match(tv,/id="joinQr"[^>]*\/qr\?code=/);
+  assert.match(tv,/id="joinQr"[^>]*\/qr\.png\?code=/);
   assert.match(tv,/\-\-lot-cols:\$\{cols\};\-\-lot-rows:\$\{rows\}/);
   assert.match(tv,/id="ctl"/);
-  assert.match(tv,/Tonight’s questionable reputations/);
+  assert.match(tv,/Tonight’s <em>suspects<\/em>/);
   assert.match(css, /grid-template-rows:repeat\(2,minmax\(0,1fr\)\)/);
 });
 test('painting UI preserves full 3:4 canvas, all editing controls, status and drawing receipt',()=>{

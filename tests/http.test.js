@@ -11,6 +11,10 @@ test('HTTP routes, security headers, static artwork and QR input validation',asy
  for(const code of ['A1BC','AB','ABCD?token=hack','AAAAA','']){const r=await fetch(base+'/qr?code='+encodeURIComponent(code));assert.equal(r.status,400);}
  const r=await fetch(base+'/qr?code=ABCD');assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'image/svg+xml');
  const svg=await r.text();assert.match(svg,/^<svg/);assert.ok(!svg.includes('resumeToken'));
+ const image=await fetch(base+'/qr.png?code=ABCD');assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/png');
+ const bytes=Buffer.from(await image.arrayBuffer());assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.ok(bytes.byteLength>600);assert.ok(image.headers.get('cache-control').includes('no-store'));
+ for(const invalid of ['ABC','AB9D','A'.repeat(700)])assert.equal((await fetch(base+'/qr.png?code='+invalid)).status,400);
 });
 test('malicious WebSocket Origin rejected; normal game client still works',async t=>{
  const srv=await startServer();t.after(()=>srv.stop());

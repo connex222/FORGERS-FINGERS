@@ -1,6 +1,6 @@
 {
   "name": "forgers-finger",
-  "version": "1.1.4-stage6d",
+  "version": "1.1.5-stage6e",
   "description": "FORGER'S FINGER — Victorian art forgery party game (TV and phones)",
   "private": true,
   "main": "server.js",

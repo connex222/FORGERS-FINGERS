@@ -1,3 +1,11 @@
+## 1.1.5-stage6e — Gallery entrance correction, 5 November 2026
+- Homepage on desktop now enters the TV gallery (`/tv`); phone and `?code=` joins remain phone controllers.
+- Built-in dependency-free PNG QR route with SVG fallback; tested scan decode and live server HTTP response.
+- Rebuilt TV front-page join panel, gold-framed player wall with the eight original avatar portraits, empty-seat status and legible gallery code.
+- Start game disabled in the TV lobby until minimum connected players/18+ consent conditions are met (server rules unchanged).
+- 720p, 1080p and 4K browser-bridge QA and all existing security/scoring tests.
+- No alteration to artwork image files, game scoring, decks, tokens or multiplayer transport.
+
 ## 1.1.3-stage6c — 5 November 2026 (local, not deployed)
 
 - New original-art illustrated nine-chapter tutorial on TV and phone with Play/Pause, Next/Previous, return, captions and keyboard support.
