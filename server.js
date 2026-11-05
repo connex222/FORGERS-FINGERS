@@ -56,7 +56,7 @@ const MIME = {
 const HEADERS = {
   'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'no-referrer', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self' https://cdn.creativeclaw.co; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
 };
 const server = http.createServer((req, res) => {
   for (const [name, value] of Object.entries(HEADERS)) res.setHeader(name, value);
