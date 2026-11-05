@@ -1,0 +1,87 @@
+/* Stage 6E — only the phone/desktop join front page. Original artwork retained. */
+body.join-view {--bg:#091523;--panel:#0c192c;--ink:#f7e8c9;--muted:#d1c5ac;--line:#9e8048;--accent:#d9b669;--accent-ink:#21160a;--brass:#e1c27b;--sel:#e7c671;background:#07101b;}
+body.join-view #app {
+  color:#f5e5c7;background:
+    linear-gradient(180deg,rgba(5,12,23,.79) 0%,rgba(5,11,20,.94) 100%),
+    url('/assets/bg-gallery.webp') center / cover;
+  overflow:hidden;
+}
+body.join-view .join-screen {
+  width:100%;max-width:600px;margin:auto;justify-content:flex-start!important;
+  gap:clamp(9px,1.25vh,16px);padding:clamp(14px,2.9vh,27px) clamp(20px,5vw,35px);
+  overflow:auto;
+}
+body.join-view .join-overline {
+  text-align:center;color:#f3d28d;font:700 11px/1.4 var(--body);
+  letter-spacing:.19em;margin:0 auto;
+}
+body.join-view .brand {min-height:70px;max-height:142px;flex:none;}
+body.join-view .brand img {height:auto;width:auto;max-width:min(79vw,340px);max-height:clamp(90px,15vh,135px);filter:drop-shadow(0 7px 15px #000b);}
+body.join-view .join-headline {
+  text-align:center;font:400 clamp(29px,7vw,45px)/1.1 var(--display);
+  color:#f5e7c6;text-shadow:0 4px 15px #000;
+}
+body.join-view .join-headline em {color:#edc776;}
+body.join-view .join-lead {
+  font:italic clamp(15px,3.9vw,19px)/1.2 var(--body);color:#ddd2bc;
+  margin:0 auto;max-width:31rem;
+}
+body.join-view .join-figure {
+  display:flex;align-items:center;gap:12px;max-width:550px;margin:1px 0 5px;
+  border-block:1px solid #876c3a;padding:6px 8px;background:rgba(0,0,0,.3);
+}
+body.join-view .join-figure img {width:clamp(48px,10vw,69px);height:clamp(48px,10vw,69px);object-fit:contain;flex:none;}
+body.join-view .join-figure p {color:#f0e6d2;font:italic clamp(14px,3.6vw,19px)/1.25 var(--body);}
+body.join-view .field {position:relative;width:100%;max-width:550px;margin:0 auto;}
+body.join-view .field label {
+  color:#f4d48b;font:700 clamp(14px,3.7vw,17px) var(--body);
+  letter-spacing:.04em;margin:0 0 6px;
+}
+body.join-view .field input {
+  color:#fff1d4;border:1px solid #bc9654;border-radius:5px;
+  background:linear-gradient(140deg,rgba(18,33,50,.98),rgba(10,18,32,.98));
+  box-shadow:inset 0 3px 9px #0008,0 0 0 2px #151c22;
+  min-height:clamp(52px,6.8vh,65px);font-size:22px;
+}
+body.join-view .field input.code-in {
+  font:700 clamp(32px,8vw,43px) var(--display);
+  letter-spacing:.2em;text-align:center;color:#ffe3a1;
+}
+body.join-view .field + .field {margin:5px auto 0;}
+body.join-view .err {max-width:550px;margin:auto;color:#ff9c8e;}
+body.join-view .foot {
+  background:linear-gradient(180deg,rgba(8,19,32,.94),rgba(5,12,19,.99));
+  border-top:1px solid #b18d47;gap:9px;padding:12px clamp(20px,5vw,35px) calc(12px + var(--safe-b));
+}
+body.join-view #joinBtn {
+  max-width:530px;margin:auto;border:2px solid #fff0bd;border-radius:5px;
+  background:linear-gradient(#ffe6a6,#d4a951 60%,#a87928);
+  color:#281706;font:700 23px var(--display);box-shadow:0 5px 17px #0008;
+}
+body.join-view .join-tv-link {
+  color:#e9d3a2;text-decoration:underline;text-underline-offset:4px;
+  text-align:center;font:700 14px var(--body);
+}
+body.join-view .join-tv-link:focus-visible {outline:3px solid #ffdf95;outline-offset:3px;}
+@media(max-height:670px){
+  body.join-view .join-screen {padding-top:7px;gap:6px;}
+  body.join-view .brand img {max-height:78px;}
+  body.join-view .join-figure {display:none;}
+  body.join-view .join-headline {font-size:28px;}
+  body.join-view .join-lead {font-size:13px;}
+  body.join-view .field input {min-height:46px;}
+}
+/* Keep lobby title and both audio/help buttons in separate safe areas. */
+body.join-view .join-screen {padding-top:calc(52px + env(safe-area-inset-top,0px));}
+body.join-view #phoneAudio,body.join-view #phoneHow {
+  top:calc(8px + env(safe-area-inset-top,0px))!important;
+  background:linear-gradient(#182b42,#101b2d)!important;
+  color:#fbe4af!important;
+  border:1px solid #c79d50!important;
+  border-radius:19px!important;
+  box-shadow:0 3px 10px #0008;
+  font:700 12px var(--body)!important;
+  padding:7px 12px!important;
+  min-height:32px;
+}
+@media(max-height:670px){body.join-view .join-screen {padding-top:calc(44px + env(safe-area-inset-top,0px));}}

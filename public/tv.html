@@ -287,6 +287,7 @@ body.after #badge { display: flex; }
 <link rel="stylesheet" href="/tv-stage6.css">
 <link rel="stylesheet" href="/tv-stage6b.css">
 <link rel="stylesheet" href="/tutorial.css">
+<link rel="stylesheet" href="/tv-lobby-premium.css">
 </head>
 <body data-phase="lobby">
 <div id="stage">
@@ -477,7 +478,8 @@ body.after #badge { display: flex; }
     $('#quip').innerHTML = S.quip ? `<span class="who">Lord Gavelby, auctioneer</span>${esc(S.quip)}` : '';
     const c = CTL[S.phase];
     $('#ctl').hidden = !c;
-    if (c) { $('#ctl').textContent = c[0]; $('#ctl').dataset.cmd = c[1]; }
+    if (c) { $('#ctl').textContent = c[0]; $('#ctl').dataset.cmd = c[1];
+      $('#ctl').disabled = S.phase === 'lobby' && (S.players.filter(p => p.connected).length < S.min || (isAdult() && !S.adultConfirmed)); }
   }
 
   function build() {
@@ -495,42 +497,61 @@ body.after #badge { display: flex; }
   /* ---------- Lobby ---------- */
   function lobby() {
     const ps = S.players;
+    const live = ps.filter(p => p.connected).length;
     const slots = Array.from({ length: S.max }, (_, i) => {
       const p = ps[i];
-      if (!p) return `<div class="slot empty"><span>Empty wall space</span></div>`;
+      if (!p) return `<div class="slot empty" aria-label="Vacant collector position ${i + 1}"><span class="slot-ordinal">${String(i + 1).padStart(2, '0')}</span><span class="vacant-portrait"><img src="/assets/avatar-${i + 1}.png" alt="" aria-hidden="true"></span><span class="slot-vacant">Seat available</span></div>`;
       const fresh = !seen.has(p.id); seen.add(p.id);
-      return `<div class="slot ${p.connected ? '' : 'gone'} ${fresh ? 'new' : ''}">${p.isVip ? '<span class="tag">Head Curator</span>' : ''}
+      return `<div class="slot occupied ${p.connected ? '' : 'gone'} ${fresh ? 'new' : ''}">${p.isVip ? '<span class="tag">Head Curator</span>' : ''}
         ${FF.avatar(p.avatar, p.name)}<span class="slot-name">${esc(p.name)}</span>
-        <span class="slot-status">${p.isVip ? 'Head Curator' : p.connected ? 'Ready to play' : 'Away'}</span></div>`;
+        <span class="slot-status">${p.isVip ? 'Head Curator' : p.connected ? 'In the gallery' : 'Away'}</span></div>`;
     }).join('');
     const vip = ps.find(p => p.isVip);
     let status;
-    if (ps.length < S.min) status = `Waiting for at least ${S.min} players. ${ps.length} in the gallery so far.`;
-    else if (isAdult() && !S.adultConfirmed) status = `${esc(vip ? vip.name : 'The Head Curator')} needs to confirm everyone is 18 or over.`;
-    else status = `Ready when you are. ${esc(vip ? vip.name : 'The Head Curator')} presses Start on their phone.`;
-    view.innerHTML = `<section class="lobby">
+    if (live < S.min) status = `Waiting for ${S.min - live} more ${S.min - live === 1 ? 'collector' : 'collectors'} before the exhibition opens.`;
+    else if (isAdult() && !S.adultConfirmed) status = `${esc(vip ? vip.name : 'The Head Curator')} must confirm everyone is 18 or over.`;
+    else status = `The gallery is assembled. ${esc(vip ? vip.name : 'The Head Curator')} may open the exhibition.`;
+    view.innerHTML = `<section class="lobby lobby-premium" aria-label="Gallery lobby">
       <div class="join-card">
-        <h1 class="lobby-welcome">Welcome to the Gallery</h1>
-        <h2>Join the exhibition</h2>
-        <div class="join-essentials">
-          <img id="joinQr" class="join-qr" src="/qr?code=${encodeURIComponent(S.code)}" alt="Scan to open the phone join page with this gallery code" width="220" height="220">
-          <div>
-            <p class="code-intro">Gallery code</p>
-            <div class="code" aria-label="Gallery code ${S.code}">${S.code.split('').map(c => `<span>${c}</span>`).join('')}</div>
-            <p class="join-lead">Or open:</p>
-            <p class="join-url">${esc(location.host)}</p>
+        <p class="gallery-overline">EST. 1888 &nbsp;·&nbsp; AN EXHIBITION OF IMPROBABLE ART</p>
+        <h1 class="lobby-welcome">Welcome to <i>the Gallery</i></h1>
+        <p class="gallery-strap">One genuine masterpiece. Several deeply suspicious imitations.</p>
+        <div class="qr-panel">
+          <div class="qr-heading"><span>01</span> <strong>SCAN TO ENTER</strong></div>
+          <div class="join-essentials">
+            <div class="qr-mat">
+              <img id="joinQr" class="join-qr" src="/qr.png?code=${encodeURIComponent(S.code)}" alt="Scan this QR code to join the gallery on your phone" width="288" height="288" loading="eager" decoding="sync">
+              <span id="qrFallback" class="qr-fallback" hidden>QR unavailable.<br>Use the gallery code.</span>
+            </div>
+            <div class="join-details">
+              <p class="code-intro">YOUR PRIVATE GALLERY CODE</p>
+              <div class="code" aria-label="Gallery code ${S.code}">${S.code.split('').map(c => `<span>${c}</span>`).join('')}</div>
+              <p class="join-lead">Scan the code with your phone camera</p>
+              <p class="join-shortlink">or visit <strong>${esc(location.host)}</strong> and enter the four letters.</p>
+              <a class="join-player-link" href="/?player=1" target="_blank" rel="noopener">Join on this computer</a>
+            </div>
           </div>
         </div>
-        <p class="settings-line"><span class="collection ${isAdult() ? 'after' : ''}">${isAdult() ? 'After Hours · 18+' : 'Family collection'}</span></p>
-        <p class="settings-line">${S.settings.drawTime} seconds to paint · Each player is Master ${S.settings.laps === 1 ? 'once' : 'twice'}</p>
-        <p class="join-instructions">Paint a masterpiece or forge one. Bid on the genuine painting, admire your favourite and win guineas. For full instructions, choose <b>How to Play</b>.</p>
+        <div class="join-bottomline">
+          <span class="collection ${isAdult() ? 'after' : ''}">${isAdult() ? 'After Hours · 18+' : 'Family collection'}</span>
+          <span>${S.settings.drawTime}s to paint &nbsp;·&nbsp; ${S.settings.laps === 1 ? 'One round as Master each' : 'Two Master rounds each'}</span>
+        </div>
+        <p class="join-instructions">The Master paints the truth. Everyone else forges a lie. Bid, bluff and collect guineas.</p>
       </div>
       <div class="wall-wrap">
-        <h2 class="wall-heading">Tonight’s questionable reputations</h2>
+        <div class="wall-topline"><span>THE PRIVATE VIEWING</span><span>3–${S.max} COLLECTORS</span></div>
+        <div class="wall-header"><h2 class="wall-heading">Tonight’s <em>suspects</em></h2><p class="collector-count"><b>${live}</b><span> / ${S.max} HERE</span></p></div>
         <div class="wall">${slots}</div>
-        <p class="lobby-status">${status}</p>
+        <p class="lobby-status" aria-live="polite">${status}</p>
       </div>
     </section>`;
+    const qrImage = document.getElementById('joinQr');
+    if (qrImage) {
+      qrImage.addEventListener('error', () => {
+        if (!qrImage.dataset.fallbackTried) { qrImage.dataset.fallbackTried = 'true'; qrImage.src = `/qr?code=${encodeURIComponent(S.code)}`; }
+        else { qrImage.hidden = true; document.getElementById('qrFallback').hidden = false; }
+      });
+    }
   }
 
   /* ---------- Intro ---------- */

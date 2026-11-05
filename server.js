@@ -11,6 +11,7 @@ const { WebSocketServer } = require('./lib/transport');
 const { canAfford, isBidUnit, settle } = require('./lib/rules');
 const STORE = require('./lib/persistence');
 const QR = require('./lib/qr');
+const QRPNG = require('./lib/qr-png');
 const DECKS = require('./decks');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -65,14 +66,16 @@ const server = http.createServer((req, res) => {
   catch { res.writeHead(400); return res.end('Bad request'); }
 
   if (urlPath === '/health') { res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' }); return res.end('ok'); }
-  if (urlPath === '/qr') {
+  if (urlPath === '/qr' || urlPath === '/qr.png') {
     const code = new URL(req.url, 'http://local').searchParams.get('code');
     const host = req.headers.host || '';
     if (!validCode(code) || !/^[A-Za-z0-9.\-:\[\]]{1,160}$/.test(host)) { res.writeHead(400); return res.end('Invalid QR request'); }
     try {
       const scheme = (req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https') ? 'https' : 'http';
-      const content = QR.svg(`${scheme}://${host}/?code=${code}`);
-      res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' }); return res.end(content);
+      const joinLink = `${scheme}://${host}/?code=${code}`;
+      const usePng = urlPath === '/qr.png';
+      const content = usePng ? QRPNG.png(joinLink) : QR.svg(joinLink);
+      res.writeHead(200, { 'Content-Type': usePng ? 'image/png' : 'image/svg+xml', 'Content-Length': content.length, 'Cache-Control': 'no-store' }); return res.end(content);
     } catch { res.writeHead(400); return res.end('QR could not be generated'); }
   }
 

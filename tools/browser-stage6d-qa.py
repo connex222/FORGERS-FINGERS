@@ -103,6 +103,12 @@ ASSET_JS += r"""
     for(const img of root.querySelectorAll?.('img') || []) {
       const src=img.getAttribute('src');
       if(src && window.__ffArt[src] && img.src!==window.__ffArt[src])img.src=window.__ffArt[src];
+      if(img.id==='joinQr' && src && src.startsWith('/qr.png?') && !img.dataset.qrBridged) {
+        img.dataset.qrBridged='true';
+        // Fetch the *real server response*, then make it readable on about:blank.
+        // This is not a mocked / randomly rendered QR code.
+        window.__ffQrData(src).then(data=>{if(img.isConnected)img.src=data;}).catch(()=>{});
+      }
     }
   }
   const obs=new MutationObserver(() => fixArt(document));
@@ -121,6 +127,9 @@ def page_html(name):
     html=re.sub(r'<script src="/([\w-]+\.js)"></script>',script,html)
     # Static references to approved artwork. For dynamic refs use the mutation observer.
     html=re.sub(r'/assets/[a-z0-9-]+\.(?:png|webp)',lambda m:ASSETS.get(m.group(0),m.group(0)),html)
+    # In the isolated about:blank test only, wait for bridged HTTP QR bytes
+    # before activating the genuine page's network-failure fallback.
+    html=html.replace('if (!qrImage.dataset.fallbackTried)', "if (qrImage.dataset.qrBridged && !qrImage.src.startsWith('data:')) return; if (!qrImage.dataset.fallbackTried)")
     html=html.replace('<head>', '<head><script>'+ASSET_JS+'</script>',1)
     return html
 
@@ -135,6 +144,7 @@ class Browser:
         page.expose_binding('__ffSend',lambda src,sid,msg: self.bridge.send(sid,msg))
         page.expose_binding('__ffPoll',lambda src,sid: self.bridge.poll(sid))
         page.expose_binding('__ffClose',lambda src,sid: self.bridge.close(sid))
+        page.expose_binding('__ffQrData', lambda src,uri: 'data:image/png;base64,'+base64.b64encode(urlopen(f'http://127.0.0.1:{self.bridge.port}'+uri,timeout=3).read()).decode())
         page.evaluate(BRIDGE_JS)
         page.set_content(page_html(typ),wait_until='load')
         self.pages.append((page,errs))

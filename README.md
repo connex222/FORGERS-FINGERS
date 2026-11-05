@@ -11,7 +11,7 @@
 3. Open the extracted `forgers-finger` folder.
 4. Double-click **`START-FORGERS-FINGER.bat`**. If Windows asks permission for Node.js on your **private** home network, allow it for Private networks only.
 5. For phone/TV play, use the **LAN TV address printed in the launcher window** (for example **http://192.168.1.42:3000/tv**) in your TV or PC browser. **Do not open the TV using localhost if you want to scan the QR code with phones**: that QR would incorrectly point to each phone’s own device. For one-PC testing without phones, **http://localhost:3000/tv** is fine.
-6. On each phone, scan the QR code or enter **`http://YOUR-PC-IP:3000`** and type the gallery code. Phones need to be on the **same private Wi-Fi/LAN**, and Windows Firewall must allow Node.js on **Private networks only**. If several PC addresses are shown (e.g. VPNs), choose the Wi-Fi or Ethernet IPv4 address under Windows **Settings → Network & internet → Properties**.
+6. On each phone, scan the large QR code (now a built-in PNG with an SVG fallback) or enter **`http://YOUR-PC-IP:3000`** and type the gallery code. Phones need to be on the **same private Wi-Fi/LAN**, and Windows Firewall must allow Node.js on **Private networks only**. If several PC addresses are shown (e.g. VPNs), choose the Wi-Fi or Ethernet IPv4 address under Windows **Settings → Network & internet → Properties**.
 7. Join 3–8 people. The Head Curator chooses the collection, painting time and rotations, then starts.
 8. To stop the game, return to the black console window and press **Ctrl+C**, then close it. Do not close that window during a match.
 
@@ -59,10 +59,11 @@ The Windows launcher enables local restart recovery by setting `FF_DATA_DIR` and
 - `server.js` — authoritative room/game server and security gates
 - `lib/rules.js` — pure scoring / bid affordability
 - `lib/transport.js` — small zero-dependency RFC 6455 WebSocket transport
-- `lib/qr.js` — offline QR generator (valid SVG join link)
+- `lib/qr.js`, `lib/qr-png.js` — offline, scan-tested QR join links (PNG primary, SVG fallback)
 - `lib/persistence.js` — opt-in encrypted local snapshot store
 - `public/index.html` — responsive, approved Stage 6 phone painting layout
 - `public/tv.html` — Stage 6 TV lobby, auction, reveal, ledger, final podium, medals and gallery
+- `public/tv-lobby-premium.css` — Stage 6E gallery entrance makeover, preserving 26 approved artworks
 - `public/phone-stage6.css`, `public/tv-stage6.css` — Batch A presentation overrides
 - `public/tv-stage6b.css` — Batch B reveal/ledger/final presentation overrides
 - `public/tutorial.js`, `public/tutorial.css`, `public/tutorial-chapters.json` — Batch C graphical tutorial
@@ -81,3 +82,11 @@ The Windows launcher enables local restart recovery by setting `FF_DATA_DIR` and
 The Browser/Node verification in `STAGE6-BATCH-D-QA.md` includes real server sessions, a real Chromium DOM via an isolated WebSocket bridge (necessary because this container blocks Chromium network navigation), 3/4/6/8-player paintings at simulated 720p/1080p/4K, and real MP3 decoder checks. **It is not a substitute for actual phone touchscreens, TV overscan, casting or listening tests.** For the simple physical checklist, see `DEVICE-ACCEPTANCE-CHECKLIST.md`.
 
 No GitHub push, Render deployment or changes to the 26 approved images were made. No paid services were created. Production persistence remains blocked pending a real durable hosting adapter.
+
+## Stage 6E: the gallery entrance and QR code
+
+On a **desktop** (with mouse/trackpad), opening the public root URL without a room code now automatically opens `/tv` so the front page shows the gallery, private four-letter code and a prominent QR image. On a **phone**, opening the same root URL shows the phone join form, allowing manual entry. The QR link itself contains `?code=ABCD`, so phones **always stay on the join form** with the code entered. The **Join on this computer** link on the TV lobby opens `/?player=1`, which also stays on the phone/player controller view. An authenticated returning player is never redirected away from their saved session.
+
+For testing, open **`https://forgers-fingers-1.onrender.com/tv`** directly in a TV/desktop browser. The QR image comes from `/qr.png?code=ABCD` on that host and points back to the same host. It contains **no private reconnect credential**. Do not use `localhost` on a remote phone or TV.
+
+The Stage 6E lobby uses all eight existing, approved avatar portraits **as dimmed previews of vacant seats**; these preview images are not real connected players. When a player joins, the real player portrait and status replace the corresponding vacant seat. All 26 original artwork image files and the underlying multiplayer/scoring logic are unmodified.

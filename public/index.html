@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#14213A">
 <title>Forgers Finger</title>
+<script>
+// The unqualified public address opens the TV gallery on desktop, rather than
+// silently showing the controller-only join form with no QR. Phone join URLs
+// with ?code= or ?player=1 always stay on this page.
+(() => {
+  const q = new URLSearchParams(location.search);
+  const incoming = q.has('code') || q.has('player') || q.has('join');
+  let isReturningPlayer = false;
+  try { const p = JSON.parse(localStorage.getItem('ff-player') || 'null');
+    isReturningPlayer = !!(p && p.pid && p.resumeToken && p.code); } catch { /* no prior session */ }
+  if (!incoming && !isReturningPlayer && matchMedia('(min-width: 1000px) and (pointer: fine)').matches)
+    location.replace('/tv');
+})();
+</script>
 <link rel="icon" href="/assets/icon-192.png">
 <link rel="apple-touch-icon" href="/assets/icon-192.png">
 <style>
@@ -147,6 +161,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 </style>
 <link rel="stylesheet" href="/phone-stage6.css">
 <link rel="stylesheet" href="/tutorial.css">
+<link rel="stylesheet" href="/phone-lobby-premium.css">
 </head>
 <body>
 <div id="app"></div>
@@ -301,6 +316,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
   }
 
   function render() {
+    document.body.classList.toggle('join-view', !S || !joined);
     const k = keyFor();
     if (k === key) { tickUpdate(); return; }
     key = k;
@@ -322,16 +338,20 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 
   /* ---------- Join ---------- */
   function joinScreen() {
-    app.innerHTML = `<div class="body" style="justify-content:center">
+    app.innerHTML = `<div class="body join-screen" style="justify-content:center">
+      <p class="join-overline">THE PRIVATE GALLERY · EST. 1888</p>
       <div class="brand"><img src="/assets/logo.png" alt="Forgers Finger" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"><span class="brand-text">Forgers Finger</span></div>
-      <p class="lead" style="text-align:center">The party game of art forgery and outrageous bidding.</p>
+      <h1 class="join-headline">Your invitation <em>awaits</em></h1>
+      <p class="lead join-lead" style="text-align:center">One genuine masterpiece. A gallery full of suspicious imitations.</p>
+      <div class="join-figure"><img src="/assets/auctioneer.png" alt="Lord Gavelby, your auctioneer"><p>“Leave your morals at the door, and keep an eye on your guineas.”</p></div>
       <div class="field"><label for="code">Gallery code (on the TV)</label>
         <input id="code" class="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(me.code || '')}"></div>
       <div class="field"><label for="name">Your name</label>
         <input id="name" maxlength="12" autocomplete="nickname" value="${esc(me.name || '')}"></div>
       <p class="err" id="joinErr"></p>
     </div>
-    <div class="foot"><button class="btn" id="joinBtn">Join the gallery</button></div>`;
+    <div class="foot"><button class="btn" id="joinBtn">Enter the Gallery</button>
+      <a class="join-tv-link" href="/tv">Hosting the game? Open the TV gallery</a></div>`;
     const code = $('#code'), name = $('#name');
     code.addEventListener('input', () => { code.value = code.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
     const go = () => {
