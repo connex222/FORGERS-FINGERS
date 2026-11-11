@@ -1,8 +1,12 @@
-# FORGER'S FINGER — Stage 6 Batch D — Local Acceptance Candidate
+# FORGER'S FINGER
 
 **Private games-night game for 3–8 people.** One TV/browser is the gallery; phones are paintbrushes and auction paddles. UK English. Family and After Hours (18+) collections retained.
 
-**No GitHub or Render changes have been made.** This ZIP includes the approved **Stage 6 Batch A** TV lobby, auction gallery and phone painting layouts, **Batch B** reveal, guinea ledger, final awards and genuine gallery, **plus Batch C** illustrated tutorial and original music/effects, on top of the tested security/scoring/recovery repairs. All 42 included Node tests passed. Browser/device acceptance and hosted restart recovery remain outstanding (see `QA-REPORT.md`).
+**Live game (as linked from Games Night):** https://forgers-fingers-1.onrender.com
+
+Current version: `1.1.6-stage6f` (see `package.json` and `STAGE6F-RELEASE-NOTES.md`). Browser/device acceptance and hosted restart recovery are tracked in `QA-REPORT.md`.
+
+The steps below are for playing on your own PC over home Wi-Fi.
 
 ## Windows: the easy way (no individual code lines)
 
