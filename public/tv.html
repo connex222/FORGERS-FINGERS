@@ -288,6 +288,7 @@ body.after #badge { display: flex; }
 <link rel="stylesheet" href="/tv-stage6b.css">
 <link rel="stylesheet" href="/tutorial.css">
 <link rel="stylesheet" href="/tv-lobby-premium.css">
+<link rel="stylesheet" href="/auction-clarity.css">
 </head>
 <body data-phase="lobby">
 <div id="stage">
@@ -600,7 +601,7 @@ body.after #badge { display: flex; }
     const { columns: cols, rows } = FF.galleryGrid(Math.max(1, count));
     view.innerHTML = `<section class="auction">
       <div class="auction-head">
-        <div class="tr"><p class="tr-label">The genuine painting is titled</p><h1 class="tr-title ${S.title.length > 48 ? 'long' : ''}">“${esc(S.title)}”</h1></div>
+        <div class="tr"><p class="tr-label">The genuine painting is titled</p><h1 class="tr-title ${S.title.length > 48 ? 'long' : ''}">“${esc(S.title)}”</h1><p class="auction-rule">One sealed wager per collector · 100 / 200 / 300 guineas · No bids revealed until the verdict</p><p class="bids-status" id="bidsStatus" aria-live="polite"></p></div>
         <div class="bidders" id="bidders"></div>
         ${timerHTML()}
       </div>
@@ -611,7 +612,11 @@ body.after #badge { display: flex; }
   }
   function renderBidders() {
     const el = $('#bidders'); if (!el) return;
-    el.innerHTML = S.players.filter(p => p.id !== S.masterId).map(p =>
+    const bidders = S.players.filter(p => p.id !== S.masterId);
+    const decided = bidders.filter(p => p.bid).length;
+    const status = $('#bidsStatus');
+    if (status) status.textContent = `${decided} of ${bidders.length} collectors have decided`;
+    el.innerHTML = bidders.map(p =>
       `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? `<span class="paddle" title="${p.passed ? 'Passed' : 'Bid'}">${p.passed ? 'P' : '✓'}</span>` : ''}</span>`
     ).join('');
   }
@@ -635,7 +640,7 @@ body.after #badge { display: flex; }
     const r = S.results, order = revealOrder();
     const elapsed = Math.max(0, Date.now() - revealStart);
     const step = Math.floor(elapsed / r.stepMs);
-    const sub = (elapsed % r.stepMs) > 1600 ? 1 : 0;
+    const sub = (elapsed % r.stepMs) > Math.min(r.stepMs - 950, Math.max(1650, Math.floor(r.stepMs * 0.62))) ? 1 : 0;
     const key = step >= order.length ? 'tail' : `${step}:${sub}`;
     if (key === revealShown) return;
     revealShown = key;
