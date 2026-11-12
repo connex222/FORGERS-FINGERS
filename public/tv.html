@@ -288,6 +288,7 @@ body.after #badge { display: flex; }
 <link rel="stylesheet" href="/tv-stage6b.css">
 <link rel="stylesheet" href="/tutorial.css">
 <link rel="stylesheet" href="/tv-lobby-premium.css">
+<link rel="stylesheet" href="/auction-clarity.css">
 </head>
 <body data-phase="lobby">
 <div id="stage">
@@ -600,7 +601,7 @@ body.after #badge { display: flex; }
     const { columns: cols, rows } = FF.galleryGrid(Math.max(1, count));
     view.innerHTML = `<section class="auction">
       <div class="auction-head">
-        <div class="tr"><p class="tr-label">The genuine painting is titled</p><h1 class="tr-title ${S.title.length > 48 ? 'long' : ''}">“${esc(S.title)}”</h1></div>
+        <div class="tr"><p class="tr-label">The genuine painting is titled</p><h1 class="tr-title ${S.title.length > 48 ? 'long' : ''}">“${esc(S.title)}”</h1><p class="auction-rule">One sealed wager per collector · 100 / 200 / 300 guineas · No bids revealed until the verdict</p><p class="bids-status" id="bidsStatus" aria-live="polite"></p></div>
         <div class="bidders" id="bidders"></div>
         ${timerHTML()}
       </div>
@@ -611,8 +612,12 @@ body.after #badge { display: flex; }
   }
   function renderBidders() {
     const el = $('#bidders'); if (!el) return;
-    el.innerHTML = S.players.filter(p => p.id !== S.masterId).map(p =>
-      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? `<span class="paddle" title="${p.passed ? 'Passed' : 'Bid'}">${p.passed ? 'P' : '✓'}</span>` : ''}</span>`
+    const bidders = S.players.filter(p => p.id !== S.masterId);
+    const decided = bidders.filter(p => p.bid).length;
+    const status = $('#bidsStatus');
+    if (status) status.textContent = S.auctionClosing ? 'All decisions sealed · final moment for Hearts' : `${decided} of ${bidders.length} collectors have decided`;
+    el.innerHTML = bidders.map(p =>
+      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? '<span class="paddle" title="Sealed decision received">✓</span>' : ''}</span>`
     ).join('');
   }
 
@@ -635,7 +640,7 @@ body.after #badge { display: flex; }
     const r = S.results, order = revealOrder();
     const elapsed = Math.max(0, Date.now() - revealStart);
     const step = Math.floor(elapsed / r.stepMs);
-    const sub = (elapsed % r.stepMs) > 1600 ? 1 : 0;
+    const sub = (elapsed % r.stepMs) > Math.min(r.stepMs - 950, Math.max(1650, Math.floor(r.stepMs * 0.62))) ? 1 : 0;
     const key = step >= order.length ? 'tail' : `${step}:${sub}`;
     if (key === revealShown) return;
     revealShown = key;
@@ -718,8 +723,10 @@ body.after #badge { display: flex; }
         const lines = [makeItem('Correct bid', b.genuine), makeItem('Forgery takings', b.forgeryIn),
           makeItem('Paid for forgery', -b.forgeryOut), makeItem('Master bonus', b.master),
           makeItem('Favourite', b.favourite)].filter(Boolean).join('');
+        const actualRank = ranked.findIndex(x => x.after === entry.after) + 1;
+        const shared = ranked.some(x => x.player.id !== p.id && x.after === entry.after);
         return `<div class="row ledger-entry" style="animation-delay:${i * 55}ms">
-          <div class="ledger-primary"><span class="rank">${i + 1}</span>${FF.avatar(p.avatar, p.name, 'sm')}
+          <div class="ledger-primary"><span class="rank" aria-label="${shared ? 'Joint ' : ''}place ${actualRank}">${shared ? '=' : ''}${actualRank}</span>${FF.avatar(p.avatar, p.name, 'sm')}
             <span class="nm">${esc(p.name)}</span><span class="ledger-total">${FF.money(entry.after)}</span>
             <span class="dl ${d > 0 ? 'up' : d < 0 ? 'down' : 'flat'}">${FF.signed(d)} gns</span></div>
           <div class="ledger-detail"><span class="ledger-before">Before: ${FF.money(entry.before)}</span>${lines || '<span class="ledger-zero">No guinea change this round</span>'}
@@ -750,17 +757,18 @@ body.after #badge { display: flex; }
     if (!f) return;
     const top = f.ranking.slice(0, 3);
     const podOrder = [top[1], top[0], top[2]].filter(Boolean);
-    const place = r => f.ranking.indexOf(r) + 1;
+    const place = r => r.rank || f.ranking.findIndex(q => q.score === r.score) + 1;
+    const shared = r => f.ranking.some(q => q.id !== r.id && q.score === r.score);
     view.innerHTML = `<section class="final final-b" aria-label="Tonight’s grand reckoning">
       <div class="ceremony">
         <header class="ceremony-head"><p class="ledger-eyebrow">The last gavel falls</p><h1>Tonight’s Grand Reckoning</h1></header>
         <div class="podium">${podOrder.map(r => {
-          const p = player(r.id), n = place(r);
-          return `<div class="pod p${n}">${FF.avatar(p.avatar, p.name, n === 1 ? 'lg' : '')}
+          const p = player(r.id), n = place(r), slot = f.ranking.indexOf(r) + 1, joint = shared(r);
+          return `<div class="pod p${slot} ${joint ? 'joint' : ''}" data-rank="${n}">${FF.avatar(p.avatar, p.name, n === 1 ? 'lg' : '')}
             <span class="nm">${esc(p.name)}</span><span class="sc">${FF.money(r.score)}</span>
-            <div class="block" aria-label="Place ${n}">${n}</div></div>`;
+            <div class="block" aria-label="${joint ? 'Joint ' : ''}place ${n}">${joint ? '<span class="joint-tag">JOINT</span>' : ''}${n}</div></div>`;
         }).join('')}</div>
-        ${f.ranking.length > 3 ? `<div class="rest">${f.ranking.slice(3).map((r, i) => `<span>${i + 4}. ${esc(player(r.id).name)} · ${FF.money(r.score)}</span>`).join('')}</div>` : ''}
+        ${f.ranking.length > 3 ? `<div class="rest">${f.ranking.slice(3).map((r, i) => `<span>${shared(r) ? 'Joint ' : ''}${place(r)}. ${esc(player(r.id).name)} · ${FF.money(r.score)}</span>`).join('')}</div>` : ''}
         <div class="awards" aria-label="Special awards">${(f.awards || []).map(a => {
           const info = AW[a.key]; if (!info) return '';
           const [t, icon, d] = info, p = player(a.id);

@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { WebSocketServer } = require('./lib/transport');
-const { canAfford, isBidUnit, settle } = require('./lib/rules');
+const { canAfford, isBidUnit, settle, rankScores } = require('./lib/rules');
 const STORE = require('./lib/persistence');
 const QR = require('./lib/qr');
 const QRPNG = require('./lib/qr-png');
@@ -24,10 +24,11 @@ const CONFIG = {
   INTRO_MS: 6000,
   GRACE_MS: Number(process.env.FF_TEST_GRACE_MS || 4000),          // extra time after the paint timer for auto-submits to arrive
   HURRY_MS: Number(process.env.FF_TEST_HURRY_MS || 5000),          // "last strokes" warning when the Head Curator ends painting early
-  AUCTION_MS: 50000,
-  REVEAL_STEP_MS: 5500,    // one step per painting on the TV reveal
-  REVEAL_TAIL_MS: 7000,    // People's Favourite step
-  SCORES_AUTO_MS: 30000,   // auto-continue if nobody presses Next
+  AUCTION_MS: Number(process.env.FF_TEST_AUCTION_MS || 50000), // server owns sealed-bid deadline
+  HEART_FINISH_MS: Number(process.env.FF_TEST_HEART_FINISH_MS || 3000), // brief optional-heart window, never past original auction deadline
+  REVEAL_STEP_MS: 3600,    // verdict, then next painting; keep television reveals brief
+  REVEAL_TAIL_MS: 4500,    // People's Favourite and a clear final beat
+  SCORES_AUTO_MS: 20000,   // allow ledger reading without a long idle hold
   VOID_MS: Number(process.env.FF_TEST_VOID_MS || 7000),
   BID_UNIT: 100,
   MASTER_PER_CORRECT: 200,
@@ -211,7 +212,7 @@ function baseState(room) {
       id: p.id, name: p.name, avatar: p.avatar, score: p.score,
       connected: p.connected, isVip: p.isVip,
       submitted: !!(cur && cur.drawings[p.id]),
-      bid: !!(cur && cur.bids[p.id]), passed: !!(cur && cur.bids[p.id]?.pass),
+      bid: !!(cur && cur.bids[p.id]), // decision complete; sealed bid versus Pass stays private until reveal
     })),
   };
   if (cur) {
@@ -219,6 +220,7 @@ function baseState(room) {
     s.catalogue = cur.entry.cat;
     s.voided = cur.voided || null;
     if (['auction', 'reveal', 'scores'].includes(room.phase)) s.title = cur.entry.title;
+    if (room.phase === 'auction') s.auctionClosing = allBid(room);
     if (room.phase === 'reveal' || room.phase === 'scores') s.results = cur.results;
   }
   if (room.phase === 'final') s.final = room.final;
@@ -363,7 +365,7 @@ function endDraw(room) {
   cur.lots = shuffle(entries.map(([ownerId, strokes]) => ({ ownerId, strokes })));
   cur.lots.forEach((l, i) => { l.letter = LETTERS[i]; });
   setPhase(room, 'auction', CONFIG.AUCTION_MS);
-  later(room, CONFIG.AUCTION_MS + 1500, () => endAuction(room));
+  later(room, CONFIG.AUCTION_MS, () => endAuction(room));
   sendLots(room);
   sync(room);
 }
@@ -377,6 +379,19 @@ function voidRound(room, reason) {
 
 const buyers = room => room.players.filter(p => p.id !== room.cur.masterId);
 const allBid = room => { const b = buyers(room); return b.length > 0 && b.every(p => room.cur.bids[p.id]); };
+
+// Give the Master and collectors a final chance to award/change a Heart after the
+// last sealed decision. Never accept bids again or extend the original 50s deadline.
+// The shorter timestamp is persisted, so recovery honours the same cutoff.
+function finishAuctionDecisions(room) {
+  if (room.phase !== 'auction' || !allBid(room)) return;
+  const left = Math.max(0, room.phaseEndsAt - Date.now());
+  const finishMs = Math.min(left, Math.max(0, CONFIG.HEART_FINISH_MS));
+  if (!finishMs) return endAuction(room);
+  room.phaseEndsAt = Date.now() + finishMs;
+  later(room, finishMs, () => endAuction(room));
+  sync(room);
+}
 
 function endAuction(room) {
   if (room.phase !== 'auction') return;
@@ -408,8 +423,7 @@ function computeResults(room) {
     masterName: master ? master.name : 'A mystery artist', strokes: original.strokes });
 }
 function endGame(room) {
-  const ranking = [...room.players].sort((a, b) => b.score - a.score)
-    .map(p => ({ id: p.id, score: p.score }));
+  const ranking = rankScores(room.players); // ties are joint places; no score-based tiebreaker
   const award = (key, stat) => {
     let best = null;
     for (const p of room.players) if (p.stats && p.stats[stat] > 0 && (!best || p.stats[stat] > best.stats[stat])) best = p;
@@ -610,28 +624,31 @@ function onMessage(ws, data) {
     }
     case 'bid': {
       if (room.phase !== 'auction' || !cur || p.id === cur.masterId || cur.bids[p.id]) return fail(ws, 'bid_denied', 'Bidding is not available.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'The auction deadline has passed.'); }
       const lot = cur.lots.find(l => l.letter === msg.lot);
       if (!lot || lot.ownerId === p.id || !isBidUnit(msg.amount) || !canAfford(p.score, msg.amount)) return fail(ws, 'bid_denied', 'Choose another artist’s lot and a bid you can afford.');
       if (msg.heart !== null && msg.heart !== undefined && !cur.lots.some(l => l.letter === msg.heart && l.ownerId !== p.id)) return fail(ws, 'heart_denied', 'You cannot admire your own painting.');
       cur.bids[p.id] = { lot: lot.letter, amount: msg.amount };
       if (msg.heart) cur.hearts[p.id] = msg.heart;
       send(ws, { t: 'bid_accepted', round: room.round, lot: lot.letter, amount: msg.amount });
-      send(room.tv, { t: 'sfx', name: 'bid' }); sync(room);
-      if (allBid(room)) endAuction(room);
+      send(room.tv, { t: 'sfx', name: 'bid' });
+      if (allBid(room)) finishAuctionDecisions(room); else sync(room);
       break;
     }
     case 'pass': {
       if (room.phase !== 'auction' || !cur || p.id === cur.masterId || cur.bids[p.id]) return fail(ws, 'pass_denied', 'Cannot pass now.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'The auction deadline has passed.'); }
       if (msg.heart !== null && msg.heart !== undefined) {
         const favourite = cur.lots.find(l => l.letter === msg.heart && l.ownerId !== p.id);
         if (!favourite) return fail(ws, 'heart_denied', 'You cannot admire your own painting.');
         cur.hearts[p.id] = favourite.letter;
       }
       cur.bids[p.id] = { pass: true }; send(ws, { t: 'pass_accepted', round: room.round });
-      sync(room); if (allBid(room)) endAuction(room); break;
+      if (allBid(room)) finishAuctionDecisions(room); else sync(room); break;
     }
     case 'heart': {
       if (room.phase !== 'auction' || !cur) return fail(ws, 'phase', 'Admiration is closed.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'Admiration has closed.'); }
       if (msg.lot === null) delete cur.hearts[p.id];
       else {
         const lot = cur.lots.find(l => l.letter === msg.lot);
@@ -679,7 +696,7 @@ function scheduleRecovered(room) {
     reveal: () => showScores(room), scores: () => nextRound(room), void: () => nextRound(room),
   }[room.phase];
   if (!next || !room.phaseEndsAt) return;
-  const grace = room.phase === 'draw' ? CONFIG.GRACE_MS : room.phase === 'auction' ? 1500 : 0;
+  const grace = room.phase === 'draw' ? CONFIG.GRACE_MS : 0;
   later(room, Math.max(0, room.phaseEndsAt + grace - Date.now()), next);
 }
 for (const raw of STORE.loadAll()) recoverRoom(raw);

@@ -1,0 +1,88 @@
+/* FORGER'S FINGER: rule-neutral auction clarity. No approved source assets touched. */
+body[data-phase="auction"] .auction-rule {
+  margin-top: clamp(4px,.65vh,12px);
+  max-width: 70ch;
+  color: #f6e7c2;
+  font: 600 clamp(13px,1.13vw,22px)/1.3 var(--body);
+  text-shadow: 0 2px 4px rgba(0,0,0,.85);
+}
+body[data-phase="auction"] .bids-status {
+  margin-top: clamp(3px,.4vh,9px);
+  font: 700 clamp(14px,1.25vw,23px)/1.25 var(--body);
+  color: #ffe5a2;
+}
+body[data-phase="auction"] .timer.low {
+  filter: drop-shadow(0 0 12px rgba(246,115,83,.7));
+}
+body[data-phase="auction"] .stake-preview {
+  margin: 2px 0 8px;
+  min-height: 2.1em;
+  text-align: center;
+  color: #f8dc93;
+  font-size: clamp(13px,3.7vw,17px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+body[data-phase="auction"] .auction-warning {
+  min-height: 1.1em;
+  margin: 4px 0 2px;
+  color: #f8e0a4;
+  font-size: clamp(13px,3.8vw,17px);
+  font-weight: 700;
+  text-align: center;
+}
+body[data-phase="auction"] .auction-warning.urgent {
+  color: #fff;
+  background: #993a34;
+  border: 1px solid #f6a49a;
+  border-radius: 8px;
+  padding: 6px;
+}
+body[data-phase="auction"] .lot.sel {
+  outline: 3px solid #f0cf82;
+  outline-offset: 2px;
+}
+body[data-phase="auction"] .lot:focus-visible,
+body[data-phase="auction"] button:focus-visible {
+  outline: 3px solid #fff1b2;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  body[data-phase="auction"] .lots { gap: 10px; }
+  body[data-phase="auction"] .title-card { padding: 9px 12px; }
+  body[data-phase="auction"] .title-card .v { font-size: clamp(20px,5.6vw,26px); }
+  body[data-phase="auction"] .stake-preview { padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-phase="auction"] .lot, body[data-phase="auction"] .timer { transition: none !important; }
+}
+
+/* Equal scores earn equal places; no arbitrary silver medal for joint winners. */
+.final-b .pod.joint .block {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 700;
+}
+.final-b .pod.joint .joint-tag {
+  display: block;
+  font: 800 clamp(11px, 1.05vw, 20px)/1.3 var(--body);
+  letter-spacing: .07em;
+  color: #24190b;
+}
+.final-b .pod.joint[data-rank="1"] .block {
+  height: clamp(57px, 11vh, 235px);
+  background: linear-gradient(#f9df9b, #c69735);
+}
+.final-b .pod.joint[data-rank="2"] .block {
+  height: clamp(48px, 8vh, 175px);
+  background: linear-gradient(#e8e8e8, #9a9a9a);
+}
+.final-b .pod.joint[data-rank="3"] .block {
+  height: clamp(40px, 6vh, 135px);
+  background: linear-gradient(#e7b98a, #9a6232);
+}
+.final-b .pod.joint[data-rank="1"] .av {
+  width: clamp(68px, 7vw, 155px);
+  height: clamp(68px, 7vw, 155px);
+}

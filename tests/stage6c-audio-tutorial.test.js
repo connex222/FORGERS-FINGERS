@@ -58,14 +58,14 @@ test('All 14 expected sound files are real MP3 bitstreams, distinct and nonempty
  assert.equal(digests.size,14,'All 14 sounds must be individually authored, not aliases');
 });
 
-test('TV sound preferences and browser voice status are honest, phone has independent controls',()=>{
- assert.ok(tv.includes('Voice (browser narration)'));
+test('TV sound preferences correctly advertise recorded Lord Gavelby with a browser fallback',()=>{
+ assert.ok(tv.includes('Voice (recorded Lord Gavelby)'));
  for(const kind of ['music','effects','voice'])assert.ok(tv.includes(`data-audio="${kind}"`));
  for(const kind of ['enabled','music','effects','voice'])assert.ok(phone.includes(`data-phone-audio="${kind}"`));
  assert.ok(phone.includes("if (!localStorage.getItem('ff-audio')) { FF.audio.music = false"));
  assert.ok(rules.includes('FF.stopVoice'));
- assert.ok(tut.includes('British English browser narration'));
- assert.ok(tut.includes('No speech engine here'));
+ assert.ok(tut.includes('Lord Gavelby — recorded Northern English narration'));
+ assert.ok(tut.includes('browser-voice fallback if unavailable'));
 });
 
 test('Mute, per-category controls and saved preferences gate actual sound events',()=>{
