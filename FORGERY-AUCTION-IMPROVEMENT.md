@@ -1,5 +1,5 @@
 # FORGER'S FINGER — Forgery Auctions Improvement
-Date: 12 November 2026 · Working branch: `improvement/forgery-auctions` · NOT MERGED OR DEPLOYED
+Date: 12 November 2026 · Development branch: `improvement/forgery-auctions` · Final release status: see `AUCTION-RELEASE-1.1.7.md`.
 
 ## Source-of-truth baseline
 - Official game title: **FORGER'S FINGER**, not "FORGERS FINGERS". Repository: `connex222/FORGERS-FINGERS`. Source baseline: `main`, `1.1.6-stage6f`.
