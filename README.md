@@ -4,9 +4,13 @@
 
 **Live game (as linked from Games Night):** https://forgers-fingers-1.onrender.com
 
-Current version: `1.1.6-stage6f` (see `package.json` and `STAGE6F-RELEASE-NOTES.md`). Browser/device acceptance and hosted restart recovery are tracked in `QA-REPORT.md`.
+Current version: `1.1.7-auctions` (see `package.json` and `AUCTION-RELEASE-1.1.7.md`). Automated verification is complete; physical-device acceptance and durable hosted restart recovery remain outstanding.
 
 The steps below are for playing on your own PC over home Wi-Fi.
+
+## Latest auction release
+
+The sealed-auction update shortens reveals, explains both financial outcomes before bidding, conceals Pass versus wager until the reveal, adds a bounded optional Heart window, fixes joint-winner ranking, and hardens reconnection retries. **All 26 approved art assets and original scoring payouts remain unchanged.** Read `AUCTION-RELEASE-1.1.7.md` for the deployment evidence and remaining physical-acceptance limitations. The older Stage 6F notes below are historical build records, not the current deployment status.
 
 ## Windows: the easy way (no individual code lines)
 
