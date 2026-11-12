@@ -698,11 +698,12 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     const r = S.results || { deltas: {} };
     const d = r.deltas[S.you.id] || 0;
     const ranked = [...S.players].sort((a, b) => b.score - a.score);
-    const rank = ranked.findIndex(p => p.id === S.you.id) + 1;
+    const rank = ranked.findIndex(p => p.score === S.you.score) + 1;
+    const tied = ranked.filter(p => p.score === S.you.score).length > 1;
     const last = S.round >= S.totalRounds;
     app.innerHTML = `${barHTML('The ledger')}
       <div class="body center" style="display:flex">
-        <p class="lead">You are ${ordinal(rank)} of ${ranked.length}</p>
+        <p class="lead">You are ${tied ? 'joint ' : ''}${ordinal(rank)} of ${ranked.length}</p>
         <p class="big-num">${FF.money(S.you.score)}</p>
         <p class="delta ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${FF.signed(d)} this lot</p>
         <p class="small">${last ? 'Final results' : 'Next lot'} in <span data-secs></span> seconds.</p>
@@ -721,13 +722,15 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 
   function final() {
     const f = S.final || { ranking: [], awards: [] };
-    const rank = f.ranking.findIndex(r => r.id === S.you.id) + 1;
+    const standing = f.ranking.find(r => r.id === S.you.id);
+    const rank = standing ? (standing.rank || f.ranking.findIndex(r => r.score === standing.score) + 1) : 0;
+    const tied = standing && f.ranking.filter(r => r.score === standing.score).length > 1;
     const NAMES = { forger: 'Master Forger', gullible: 'Most Generous Collector', favourite: 'People’s Favourite', eagle: 'Eagle Eye' };
     const mine = f.awards.filter(a => a.id === S.you.id).map(a => NAMES[a.key]);
     app.innerHTML = `${barHTML('Final results')}
       <div class="body center" style="display:flex">
         <p class="lead">You finished</p>
-        <p class="big-num">${rank ? ordinal(rank) : '–'}</p>
+        <p class="big-num">${rank ? (tied ? 'Joint ' : '') + ordinal(rank) : '–'}</p>
         <p class="lead">${FF.money(S.you.score)}</p>
         ${mine.length ? `<p>${mine.map(n => `<span class="pill">${n}</span>`).join(' ')}</p>` : ''}
         <p class="small">The TV is showing tonight’s genuine masterpieces.</p>
