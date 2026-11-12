@@ -1,0 +1,36 @@
+name: FORGER'S FINGER auction branch QA
+
+on:
+  push:
+    branches:
+      - improvement/forgery-auctions
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Rules, protocol, art integrity and economics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies (none external)
+        run: npm ci --offline
+      - name: Complete project QA
+        run: npm run qa
+      - name: Economic stress simulation
+        run: |
+          node tools/forgery-balance-simulation.js > forgery-economics-results.json
+          node -e "const c=require('./forgery-economics-results.json').cases; if(c.length!==16||c.some(x=>x.negative||x.ledgerErrors))process.exit(1)"
+      - name: Archive economics evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forgery-auction-economics
+          path: forgery-economics-results.json
+          if-no-files-found: ignore
