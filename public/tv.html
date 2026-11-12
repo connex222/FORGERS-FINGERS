@@ -766,7 +766,7 @@ body.after #badge { display: flex; }
           const p = player(r.id), n = place(r), slot = f.ranking.indexOf(r) + 1, joint = shared(r);
           return `<div class="pod p${slot} ${joint ? 'joint' : ''}" data-rank="${n}">${FF.avatar(p.avatar, p.name, n === 1 ? 'lg' : '')}
             <span class="nm">${esc(p.name)}</span><span class="sc">${FF.money(r.score)}</span>
-            <div class="block" aria-label="${joint ? 'Joint ' : ''}place ${n}">${joint ? '=' : ''}${n}</div></div>`;
+            <div class="block" aria-label="${joint ? 'Joint ' : ''}place ${n}">${joint ? '<span class="joint-tag">JOINT</span>' : ''}${n}</div></div>`;
         }).join('')}</div>
         ${f.ranking.length > 3 ? `<div class="rest">${f.ranking.slice(3).map((r, i) => `<span>${shared(r) ? 'Joint ' : ''}${place(r)}. ${esc(player(r.id).name)} · ${FF.money(r.score)}</span>`).join('')}</div>` : ''}
         <div class="awards" aria-label="Special awards">${(f.awards || []).map(a => {
