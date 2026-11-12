@@ -11,7 +11,7 @@ async function port() {
 async function startServer(options={}) {
   const p = options.port || await port();
   const cp=spawn(process.execPath,['server.js'],{cwd:path.resolve(__dirname,'..'),
-    env:{...process.env,PORT:String(p),...options.env}, stdio:['ignore','pipe','pipe']});
+    env:{...process.env,PORT:String(p),FF_TEST_HEART_FINISH_MS:'15',...options.env}, stdio:['ignore','pipe','pipe']});
   let out='',err=''; cp.stdout.on('data',d=>{out+=d;});cp.stderr.on('data',d=>{err+=d;});
   await new Promise((resolve,reject)=>{
     const timeout=setTimeout(()=>reject(new Error('Server startup timed out: '+err+' '+out)),5000);
