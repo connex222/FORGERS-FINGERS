@@ -25,6 +25,7 @@ const CONFIG = {
   GRACE_MS: Number(process.env.FF_TEST_GRACE_MS || 4000),          // extra time after the paint timer for auto-submits to arrive
   HURRY_MS: Number(process.env.FF_TEST_HURRY_MS || 5000),          // "last strokes" warning when the Head Curator ends painting early
   AUCTION_MS: Number(process.env.FF_TEST_AUCTION_MS || 50000), // server owns sealed-bid deadline
+  HEART_FINISH_MS: Number(process.env.FF_TEST_HEART_FINISH_MS || 3000), // brief optional-heart window, never past original auction deadline
   REVEAL_STEP_MS: 3600,    // verdict, then next painting; keep television reveals brief
   REVEAL_TAIL_MS: 4500,    // People's Favourite and a clear final beat
   SCORES_AUTO_MS: 20000,   // allow ledger reading without a long idle hold
@@ -211,7 +212,7 @@ function baseState(room) {
       id: p.id, name: p.name, avatar: p.avatar, score: p.score,
       connected: p.connected, isVip: p.isVip,
       submitted: !!(cur && cur.drawings[p.id]),
-      bid: !!(cur && cur.bids[p.id]), passed: !!(cur && cur.bids[p.id]?.pass),
+      bid: !!(cur && cur.bids[p.id]), // decision complete; sealed bid versus Pass stays private until reveal
     })),
   };
   if (cur) {
@@ -219,6 +220,7 @@ function baseState(room) {
     s.catalogue = cur.entry.cat;
     s.voided = cur.voided || null;
     if (['auction', 'reveal', 'scores'].includes(room.phase)) s.title = cur.entry.title;
+    if (room.phase === 'auction') s.auctionClosing = allBid(room);
     if (room.phase === 'reveal' || room.phase === 'scores') s.results = cur.results;
   }
   if (room.phase === 'final') s.final = room.final;
@@ -377,6 +379,19 @@ function voidRound(room, reason) {
 
 const buyers = room => room.players.filter(p => p.id !== room.cur.masterId);
 const allBid = room => { const b = buyers(room); return b.length > 0 && b.every(p => room.cur.bids[p.id]); };
+
+// Give the Master and collectors a final chance to award/change a Heart after the
+// last sealed decision. Never accept bids again or extend the original 50s deadline.
+// The shorter timestamp is persisted, so recovery honours the same cutoff.
+function finishAuctionDecisions(room) {
+  if (room.phase !== 'auction' || !allBid(room)) return;
+  const left = Math.max(0, room.phaseEndsAt - Date.now());
+  const finishMs = Math.min(left, Math.max(0, CONFIG.HEART_FINISH_MS));
+  if (!finishMs) return endAuction(room);
+  room.phaseEndsAt = Date.now() + finishMs;
+  later(room, finishMs, () => endAuction(room));
+  sync(room);
+}
 
 function endAuction(room) {
   if (room.phase !== 'auction') return;
@@ -616,8 +631,8 @@ function onMessage(ws, data) {
       cur.bids[p.id] = { lot: lot.letter, amount: msg.amount };
       if (msg.heart) cur.hearts[p.id] = msg.heart;
       send(ws, { t: 'bid_accepted', round: room.round, lot: lot.letter, amount: msg.amount });
-      send(room.tv, { t: 'sfx', name: 'bid' }); sync(room);
-      if (allBid(room)) endAuction(room);
+      send(room.tv, { t: 'sfx', name: 'bid' });
+      if (allBid(room)) finishAuctionDecisions(room); else sync(room);
       break;
     }
     case 'pass': {
@@ -629,7 +644,7 @@ function onMessage(ws, data) {
         cur.hearts[p.id] = favourite.letter;
       }
       cur.bids[p.id] = { pass: true }; send(ws, { t: 'pass_accepted', round: room.round });
-      sync(room); if (allBid(room)) endAuction(room); break;
+      if (allBid(room)) finishAuctionDecisions(room); else sync(room); break;
     }
     case 'heart': {
       if (room.phase !== 'auction' || !cur) return fail(ws, 'phase', 'Admiration is closed.');
