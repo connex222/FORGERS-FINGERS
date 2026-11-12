@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { WebSocketServer } = require('./lib/transport');
-const { canAfford, isBidUnit, settle } = require('./lib/rules');
+const { canAfford, isBidUnit, settle, rankScores } = require('./lib/rules');
 const STORE = require('./lib/persistence');
 const QR = require('./lib/qr');
 const QRPNG = require('./lib/qr-png');
@@ -408,8 +408,7 @@ function computeResults(room) {
     masterName: master ? master.name : 'A mystery artist', strokes: original.strokes });
 }
 function endGame(room) {
-  const ranking = [...room.players].sort((a, b) => b.score - a.score)
-    .map(p => ({ id: p.id, score: p.score }));
+  const ranking = rankScores(room.players); // ties are joint places; no score-based tiebreaker
   const award = (key, stat) => {
     let best = null;
     for (const p of room.players) if (p.stats && p.stats[stat] > 0 && (!best || p.stats[stat] > best.stats[stat])) best = p;
