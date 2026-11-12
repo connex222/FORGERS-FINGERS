@@ -647,7 +647,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       <div class="body">
         <div class="card secret"><h2>Your painting is Lot ${esc(y.lot || '?')}</h2>
           <p>Earn 200 guineas per correct buyer if <b>some but not all actual bids</b> find your painting. Keep a straight face.</p></div>
-        <p class="small">While you wait, tap ♥ to admire someone else’s painting.</p>
+        <p class="small">Tap ♥ to admire another painting. Once all collectors decide, a brief final Heart window remains (within the auction deadline).</p>
         ${lotGrid(false)}
       </div>
       ${isVip() ? `<div class="foot"><button class="btn ghost" id="closeBids">Close bidding now</button></div>` : ''}`;
@@ -668,7 +668,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       <div class="body" style="display:flex;flex-direction:column;gap:12px">
         <h1>${passed ? 'Auction passed' : 'Sealed bid received'}</h1>
         <p class="lead">${passed ? 'No guineas committed.' : `Lot ${esc(b.lot)} — ${b.amount * 100} gns, accepted.`}</p>
-        <p class="small">You have ${FF.money(S.you.score)}. ${waiting ? `Waiting for ${waiting} more auction decisions.` : 'All auction decisions are in.'}</p>
+        <p class="small">You have ${FF.money(S.you.score)}. ${waiting ? `Waiting for ${waiting} more auction decisions.` : 'All auction decisions are in — a brief final moment for Hearts.'}</p>
         <p class="small">Your selection stays private until the reveal. You can still ♥ admire another painting.</p>
         ${lotGrid(false)}
       </div>
