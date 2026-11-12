@@ -128,3 +128,64 @@ test('all-pass full match keeps joint-first place for every player without a tie
   assert.match(tvHtml, /Joint /);
   assert.match(phone, /Joint /);
 });
+
+test('all decisions sealed: public Pass stays private, Master can still award a Heart', async t => {
+  const srv = await startServer({ env: { FF_TEST_AUCTION_MS: '2400', FF_TEST_HEART_FINISH_MS: '900' } });
+  t.after(() => srv.stop());
+  const host = await tv(srv.port);
+  const ps = [];
+  for (let i = 0; i < 3; i++) ps.push(await player(srv.port, host.code, 'Private' + i));
+  t.after(() => { host.c.close(); ps.forEach(p => p.c.close()); });
+  const draw = await enterDraw(host.c, ps);
+  for (const p of ps) await submit(p, draw.round);
+  await host.c.wait('state', s => s.phase === 'auction');
+  const master = ps.find(p => p.pid === draw.masterId);
+  const bidders = ps.filter(p => p.pid !== draw.masterId);
+  const ownLots = await master.c.wait('lots', s => s.round === draw.round);
+  const admired = ownLots.lots.find(l => !l.mine);
+  assert.ok(admired);
+
+  bidders[0].c.send({ t: 'pass' });
+  await bidders[0].c.wait('pass_accepted');
+  const partial = await host.c.wait('state', s => s.phase === 'auction' && s.players.some(p => p.id === bidders[0].pid && p.bid));
+  assert.equal(partial.auctionClosing, false);
+  assert.equal(Object.hasOwn(partial.players.find(p => p.id === bidders[0].pid), 'passed'), false);
+  assert.ok(partial.players.every(p => !Object.hasOwn(p, 'passed')));
+  // The bidder still sees their own choice on the private state channel.
+  const privateState = await bidders[0].c.wait('state', s => s.phase === 'auction' && s.you.bid?.pass === true);
+  assert.equal(privateState.you.bid.pass, true);
+
+  bidders[1].c.send({ t: 'pass' });
+  await bidders[1].c.wait('pass_accepted');
+  const closing = await host.c.wait('state', s => s.phase === 'auction' && s.auctionClosing);
+  assert.ok(closing.timeLeft > 0 && closing.timeLeft <= 900);
+  await bidders[0].c.expectError('pass_denied', { t: 'pass' });
+  master.c.send({ t: 'heart', lot: admired.letter });
+  const heartfelt = await master.c.wait('state', s => s.phase === 'auction' && s.you.heart === admired.letter);
+  assert.equal(heartfelt.you.heart, admired.letter);
+  const revealed = await host.c.wait('state', s => s.phase === 'reveal', 3500);
+  assert.equal(revealed.results.totalBids, 0);
+  assert.deepEqual(revealed.results.heartWinners, [admired.letter]);
+  const artist = ownLots.lots.find(l => l.letter === admired.letter);
+  assert.ok(artist && !artist.mine);
+  assert.equal(revealed.players.find(p => p.id === ps.find(x => x.pid !== master.pid && ownLots.lots.find(l => l.letter === admired.letter)?.letter === admired.letter)?.pid)?.score >= 1000, true);
+});
+
+test('last decisions cannot prolong original sealed-auction deadline', async t => {
+  const srv = await startServer({ env: { FF_TEST_AUCTION_MS: '1200', FF_TEST_HEART_FINISH_MS: '3200' } });
+  t.after(() => srv.stop());
+  const host = await tv(srv.port), ps = [];
+  for (let i = 0; i < 3; i++) ps.push(await player(srv.port, host.code, 'Deadline' + i));
+  t.after(() => { host.c.close(); ps.forEach(p => p.c.close()); });
+  const draw = await enterDraw(host.c, ps);
+  for (const p of ps) await submit(p, draw.round);
+  const auction = await host.c.wait('state', s => s.phase === 'auction');
+  assert.ok(auction.timeLeft > 0 && auction.timeLeft <= 1200);
+  for (const p of ps.filter(p => p.pid !== draw.masterId)) {
+    p.c.send({ t: 'pass' }); await p.c.wait('pass_accepted');
+  }
+  const closing = await host.c.wait('state', s => s.phase === 'auction' && s.auctionClosing);
+  assert.ok(closing.timeLeft > 0 && closing.timeLeft <= auction.timeLeft);
+  const reveal = await host.c.wait('state', s => s.phase === 'reveal', 3500);
+  assert.equal(reveal.results.totalBids, 0);
+});
