@@ -79,3 +79,52 @@ test('simulation uses real rules with no impossible money or mismatched ledger',
   assert.ok(sim.cases.every(c => c.negative === 0 && c.ledgerErrors === 0));
   assert.ok(sim.cases.every(c => c.masterTurns === c.matches * c.players * c.laps));
 });
+
+test('joint winner ranks are equal, deterministic and do not alter guinea balances', () => {
+  const { rankScores } = require('../lib/rules');
+  const sample = [
+    { id: 'z', score: 2000 }, { id: 'q', score: 1500 },
+    { id: 'a', score: 2000 }, { id: 'x', score: 1200 }, { id: 'w', score: 1200 },
+  ];
+  const snapshot = JSON.stringify(sample);
+  assert.deepEqual(rankScores(sample), [
+    { id: 'a', score: 2000, rank: 1 }, { id: 'z', score: 2000, rank: 1 },
+    { id: 'q', score: 1500, rank: 3 }, { id: 'w', score: 1200, rank: 4 },
+    { id: 'x', score: 1200, rank: 4 },
+  ]);
+  assert.equal(JSON.stringify(sample), snapshot);
+});
+
+test('all-pass full match keeps joint-first place for every player without a tiebreaker', async t => {
+  const srv = await startServer();
+  t.after(() => srv.stop());
+  const host = await tv(srv.port);
+  const ps = [];
+  for (let i = 0; i < 3; i++) ps.push(await player(srv.port, host.code, 'Equal' + i));
+  t.after(() => { host.c.close(); ps.forEach(p => p.c.close()); });
+  ps[0].c.send({ t: 'cmd', cmd: 'start' });
+  for (let round = 1; round <= 3; round++) {
+    await host.c.wait('state', s => s.phase === 'intro' && s.round === round);
+    host.c.send({ t: 'tv_cmd', cmd: 'skip' });
+    const drawing = await host.c.wait('state', s => s.phase === 'draw' && s.round === round);
+    for (const p of ps) await submit(p, round);
+    await host.c.wait('state', s => s.phase === 'auction' && s.round === round);
+    for (const p of ps.filter(p => p.pid !== drawing.masterId)) {
+      p.c.send({ t: 'pass' });
+      await p.c.wait('pass_accepted', s => s.round === round);
+    }
+    await host.c.wait('state', s => s.phase === 'reveal' && s.round === round);
+    host.c.send({ t: 'tv_cmd', cmd: 'next' });
+    await host.c.wait('state', s => s.phase === 'scores' && s.round === round);
+    host.c.send({ t: 'tv_cmd', cmd: 'next' });
+  }
+  const completed = await host.c.wait('state', s => s.phase === 'final');
+  assert.equal(completed.final.ranking.length, 3);
+  assert.ok(completed.final.ranking.every(r => r.score === 1000 && r.rank === 1));
+  assert.equal(new Set(completed.final.ranking.map(r => r.id)).size, 3);
+  const tvHtml = fs.readFileSync(path.join(__dirname, '../public/tv.html'), 'utf8');
+  const phone = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  assert.match(tvHtml, /joint-tag/);
+  assert.match(tvHtml, /Joint /);
+  assert.match(phone, /Joint /);
+});
