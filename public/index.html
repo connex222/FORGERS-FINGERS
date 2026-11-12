@@ -162,6 +162,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
 <link rel="stylesheet" href="/phone-stage6.css">
 <link rel="stylesheet" href="/tutorial.css">
 <link rel="stylesheet" href="/phone-lobby-premium.css">
+<link rel="stylesheet" href="/auction-clarity.css">
 </head>
 <body>
 <div id="app"></div>
@@ -590,15 +591,17 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     if (lotsRound !== S.round) { app.innerHTML = `${barHTML('Auction')}<div class="body center" style="display:flex"><h2>Hanging the paintings…</h2></div>`; return; }
     app.innerHTML = `${barHTML('Collector')}
       <div class="body">
-        <p class="small">Your available balance: <b>${FF.money(y.score)}</b>. Unaffordable bids are disabled.</p>
+        <p class="small">Your balance: <b>${FF.money(y.score)}</b>. One secret bid only; the Master cannot bid.</p>
         <div class="title-card"><p class="k">The genuine painting is titled</p><p class="v">“${esc(S.title)}”</p></div>
-        <p class="small">Tap the painting you think is genuine. Tap ♥ to admire your favourite (optional).</p>
+        <p class="small">Choose the genuine painting, then stake 100, 200 or 300. Correct: gain your stake. Forgery: pay its artist. ♥ is optional and separate.</p>
+        <p class="auction-warning" data-auction-warning role="status" aria-live="polite"></p>
         ${lotGrid(true)}
       </div>
       <div class="foot">
         <div class="amounts">${[1, 2, 3].map(a => `<button data-amt="${a}" aria-pressed="${auc.amount === a}" ${y.score < a * 100 ? 'disabled' : ''}>${a * 100} gns${y.score < a * 100 ? ' (unaffordable)' : ''}</button>`).join('')}</div>
+        <p class="stake-preview" id="stakePreview" aria-live="polite"></p>
         <button class="btn" id="bidBtn"></button>
-        <button class="btn quiet" id="passBtn">Pass — cannot afford / no bid</button>
+        <button class="btn quiet" id="passBtn">Pass — no guineas at risk</button>
         ${isVip() ? `<button class="btn quiet" id="closeBids">Head Curator: close bidding now</button>` : ''}
       </div>`;
     FF.paintAll(app, lots);
@@ -609,7 +612,9 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       app.querySelectorAll('[data-amt]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.amt) === auc.amount));
       const b = $('#bidBtn');
       b.disabled = !auc.sel || !auc.amount || y.score < auc.amount * 100;
-      b.textContent = auc.sel ? `Bid ${auc.amount * 100} gns on Lot ${auc.sel}` : 'Choose a painting';
+      b.textContent = auc.sel ? `Seal ${auc.amount * 100} gns on Lot ${auc.sel}` : 'Choose a painting';
+      const preview = $('#stakePreview');
+      if (preview) preview.textContent = !auc.sel || !auc.amount ? 'One confidential selection. No bidding war.' : `Lot ${auc.sel}: genuine +${auc.amount * 100} gns · forgery −${auc.amount * 100} gns.`;
     };
     app.querySelectorAll('[data-lot-card]').forEach(c => {
       const pickLot = () => { const l = lots[c.dataset.lotCard]; if (!l || l.mine) return; auc.sel = l.letter; buzz(15); refresh(); };
@@ -641,7 +646,7 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     app.innerHTML = `${barHTML('Master', true)}
       <div class="body">
         <div class="card secret"><h2>Your painting is Lot ${esc(y.lot || '?')}</h2>
-          <p>You score if <b>some</b> collectors buy it, but not all of them. Keep a straight face.</p></div>
+          <p>Earn 200 guineas per correct buyer if <b>some but not all actual bids</b> find your painting. Keep a straight face.</p></div>
         <p class="small">While you wait, tap ♥ to admire someone else’s painting.</p>
         ${lotGrid(false)}
       </div>
@@ -661,10 +666,10 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     const waiting = S.players.filter(p => p.connected && p.id !== S.masterId && !p.bid).length;
     app.innerHTML = `${barHTML('Collector')}
       <div class="body" style="display:flex;flex-direction:column;gap:12px">
-        <h1>${passed ? 'Passed this lot' : 'Paddle raised'}</h1>
+        <h1>${passed ? 'Auction passed' : 'Sealed bid received'}</h1>
         <p class="lead">${passed ? 'No guineas committed.' : `Lot ${esc(b.lot)} — ${b.amount * 100} gns, accepted.`}</p>
         <p class="small">You have ${FF.money(S.you.score)}. ${waiting ? `Waiting for ${waiting} more auction decisions.` : 'All auction decisions are in.'}</p>
-        <p class="small">You can still ♥ admire another painting (optional).</p>
+        <p class="small">Your selection stays private until the reveal. You can still ♥ admire another painting.</p>
         ${lotGrid(false)}
       </div>
       ${isVip() && waiting ? `<div class="foot"><button class="btn ghost" id="closeBids">Close bidding now</button></div>` : ''}`;
@@ -745,6 +750,13 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
       el.classList.toggle('low', show && sec <= 10);
     });
     document.querySelectorAll('[data-secs]').forEach(el => { el.textContent = sec; });
+    document.querySelectorAll('[data-auction-warning]').forEach(el => {
+      el.textContent = S && S.phase === 'auction' && sec <= 10 ? 'Final 10 seconds — seal your bid or pass!' : '';
+      el.classList.toggle('urgent', S && S.phase === 'auction' && sec <= 10);
+    });
+    if (S && S.phase === 'auction' && sec === 0) {
+      ['bidBtn', 'passBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
+    }
   }
   setInterval(() => {
     if (!S) return;
