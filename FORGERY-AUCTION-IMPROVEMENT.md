@@ -28,7 +28,7 @@ Date: 12 November 2026 · Working branch: `improvement/forgery-auctions` · NOT 
 | 6 | 40.0 s | 26.1 s | 13.9 s |
 | 8 | 51.0 s | 33.3 s | 17.7 s |
 
-The auction remains capped at 50 seconds **but auto-closes immediately when every eligible player has submitted a decision**. For fairness, disconnected players can still reconnect until the deadline. No additional waiting transition was added after each offer.
+The auction remains capped at 50 seconds. After every eligible buyer submits a sealed decision, the server gives up to **three final seconds to award or change a Heart**, but **never beyond the original 50-second deadline**. This avoids denying the Master an optional favourite vote when collectors act quickly. Disconnected players may rejoin within the active deadline; bids cannot be changed or repeated in the finishing window. No extra waiting transition is added after individual offers.
 
 ## Scoring: no rules changed
 No bids, payout amounts, initial guineas, heart bonuses, Master bonuses, win conditions or collections were altered. All simulator scenarios run the actual `lib/rules.js` `settle` function. Reproduce using `node tools/forgery-balance-simulation.js`.
@@ -69,3 +69,15 @@ Across these synthetic matches there were **0 negative balances and 0 inconsiste
 
 ## Existing unrelated release limitations
 The repository's earlier reports still warn that Render's ephemeral storage is not durable restart persistence; a production storage adapter has not been certified. Stage 6F recorded narration may depend on external audio URLs unless downloaded locally. Neither issue is hidden or silently altered in this branch.
+
+
+## Phase 3 — sealed-auction privacy and reconnect hardening (12 November 2026)
+
+- **Pass secrecy:** During the auction, the public TV/other-player state reveals only whether each collector **has decided**. It no longer distinguishes Pass from an actual monetary bid. The acting player's own private state still confirms their Pass or wager; amount and chosen letter stay private until the reveal. TV paddles now display only an anonymous-to-choice acknowledgement tick.
+- **Heart completion:** The final sealed decision starts a **maximum three-second** server-owned window for optional Hearts. The original auction expiry is an absolute upper bound. Votes may still be cast by the Master and collectors within that window; no extra bids or second Pass decisions can be submitted. Recovery persists the shortened finish timestamp.
+- **Phone recovery:** A failed WebSocket send never disables the bid/pass button. Server-declined actions clear the temporary disabled UI and allow a valid retry where the deadline permits. An invalid favourite is cleared on rejection to allow re-selection.
+- **Regression checks:** Added mixed Pass/decision privacy checks, rejection after a completed decision, a Master Heart submitted after all other decisions, deadline-clamping checks, and restart while the Heart window is open to confirm one-time settlement. The existing rapid full-match QA uses a test-only 15ms close window, while dedicated tests exercise longer realistic timing. Production uses 3000ms.
+- **Scoring remains unchanged.** The public status does not expose whether someone bet or passed. All 26 approved artworks remain intact.
+
+### Phase 3 physical acceptance additions
+Before release, ask collectors whether they can tell **who passed** before the reveal (they should not be able to). Have a Master award their favourite *after* the last sealed decision and verify it registers inside the final seconds. Force a mobile data interruption while trying to seal a bid; after reconnection, a rejected send must not leave a permanently disabled button, and a confirmed action must never be accepted twice.
