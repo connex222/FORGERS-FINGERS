@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - improvement/forgery-auctions
+      - main
   workflow_dispatch:
 
 permissions:
