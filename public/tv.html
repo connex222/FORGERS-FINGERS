@@ -615,9 +615,9 @@ body.after #badge { display: flex; }
     const bidders = S.players.filter(p => p.id !== S.masterId);
     const decided = bidders.filter(p => p.bid).length;
     const status = $('#bidsStatus');
-    if (status) status.textContent = `${decided} of ${bidders.length} collectors have decided`;
+    if (status) status.textContent = S.auctionClosing ? 'All decisions sealed · final moment for Hearts' : `${decided} of ${bidders.length} collectors have decided`;
     el.innerHTML = bidders.map(p =>
-      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? `<span class="paddle" title="${p.passed ? 'Passed' : 'Bid'}">${p.passed ? 'P' : '✓'}</span>` : ''}</span>`
+      `<span class="bidder ${p.bid ? 'done' : ''}" title="${esc(p.name)}">${FF.avatar(p.avatar, p.name, 'sm')}${p.bid ? '<span class="paddle" title="Sealed decision received">✓</span>' : ''}</span>`
     ).join('');
   }
 
