@@ -189,3 +189,51 @@ test('last decisions cannot prolong original sealed-auction deadline', async t =
   const reveal = await host.c.wait('state', s => s.phase === 'reveal', 3500);
   assert.equal(reveal.results.totalBids, 0);
 });
+
+test('server restart keeps sealed decision and Heart grace and settles once', async t => {
+  const { connect, os } = require('./helpers');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-final-heart-'));
+  const env = {
+    FF_DATA_DIR: dir, FF_PERSISTENCE_KEY: 'test-only-32-characters-secret-aaaaaaaaa',
+    FF_TEST_AUCTION_MS: '8000', FF_TEST_HEART_FINISH_MS: '2200',
+  };
+  let srv = await startServer({ env });
+  const host = await tv(srv.port), ps = [];
+  let restartedTv = null;
+  t.after(async () => {
+    host.c.close();
+    ps.forEach(p => p.c.close());
+    if (restartedTv) restartedTv.close();
+    await srv.stop();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  for (let i = 0; i < 3; i++) ps.push(await player(srv.port, host.code, 'Persist' + i));
+  const draw = await enterDraw(host.c, ps);
+  for (const p of ps) await submit(p, draw.round);
+  await host.c.wait('state', s => s.phase === 'auction');
+  const master = ps.find(p => p.pid === draw.masterId);
+  const lots = await master.c.wait('lots', m => m.round === draw.round);
+  const heart = lots.lots.find(l => !l.mine).letter;
+  for (const p of ps.filter(p => p.pid !== draw.masterId)) {
+    p.c.send({ t: 'pass' });
+    await p.c.wait('pass_accepted');
+  }
+  const closing = await host.c.wait('state', s => s.phase === 'auction' && s.auctionClosing);
+  assert.ok(closing.timeLeft > 0 && closing.timeLeft <= 2200);
+  master.c.send({ t: 'heart', lot: heart });
+  await master.c.wait('state', s => s.phase === 'auction' && s.you.heart === heart);
+  const originalPort = srv.port;
+  await srv.stop();
+  srv = await startServer({ port: originalPort, env });
+  restartedTv = await connect(srv.port);
+  restartedTv.send({ t: 'tv_resume', code: host.code, token: host.token });
+  await restartedTv.wait('tv_ok');
+  const first = await restartedTv.wait('state', s => s.phase === 'auction' || s.phase === 'reveal');
+  assert.equal(first.code, host.code);
+  const reveal = first.phase === 'reveal'
+    ? first : await restartedTv.wait('state', s => s.phase === 'reveal', 6000);
+  assert.equal(reveal.results.totalBids, 0);
+  assert.deepEqual(reveal.results.heartWinners, [heart]);
+  assert.equal(reveal.players.filter(p => p.score === 1100).length, 1);
+  assert.equal(reveal.players.filter(p => p.score === 1000).length, 2);
+});
