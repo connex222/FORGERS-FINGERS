@@ -24,10 +24,10 @@ const CONFIG = {
   INTRO_MS: 6000,
   GRACE_MS: Number(process.env.FF_TEST_GRACE_MS || 4000),          // extra time after the paint timer for auto-submits to arrive
   HURRY_MS: Number(process.env.FF_TEST_HURRY_MS || 5000),          // "last strokes" warning when the Head Curator ends painting early
-  AUCTION_MS: 50000,
-  REVEAL_STEP_MS: 5500,    // one step per painting on the TV reveal
-  REVEAL_TAIL_MS: 7000,    // People's Favourite step
-  SCORES_AUTO_MS: 30000,   // auto-continue if nobody presses Next
+  AUCTION_MS: Number(process.env.FF_TEST_AUCTION_MS || 50000), // server owns sealed-bid deadline
+  REVEAL_STEP_MS: 3600,    // verdict, then next painting; keep television reveals brief
+  REVEAL_TAIL_MS: 4500,    // People's Favourite and a clear final beat
+  SCORES_AUTO_MS: 20000,   // allow ledger reading without a long idle hold
   VOID_MS: Number(process.env.FF_TEST_VOID_MS || 7000),
   BID_UNIT: 100,
   MASTER_PER_CORRECT: 200,
@@ -363,7 +363,7 @@ function endDraw(room) {
   cur.lots = shuffle(entries.map(([ownerId, strokes]) => ({ ownerId, strokes })));
   cur.lots.forEach((l, i) => { l.letter = LETTERS[i]; });
   setPhase(room, 'auction', CONFIG.AUCTION_MS);
-  later(room, CONFIG.AUCTION_MS + 1500, () => endAuction(room));
+  later(room, CONFIG.AUCTION_MS, () => endAuction(room));
   sendLots(room);
   sync(room);
 }
@@ -610,6 +610,7 @@ function onMessage(ws, data) {
     }
     case 'bid': {
       if (room.phase !== 'auction' || !cur || p.id === cur.masterId || cur.bids[p.id]) return fail(ws, 'bid_denied', 'Bidding is not available.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'The auction deadline has passed.'); }
       const lot = cur.lots.find(l => l.letter === msg.lot);
       if (!lot || lot.ownerId === p.id || !isBidUnit(msg.amount) || !canAfford(p.score, msg.amount)) return fail(ws, 'bid_denied', 'Choose another artist’s lot and a bid you can afford.');
       if (msg.heart !== null && msg.heart !== undefined && !cur.lots.some(l => l.letter === msg.heart && l.ownerId !== p.id)) return fail(ws, 'heart_denied', 'You cannot admire your own painting.');
@@ -622,6 +623,7 @@ function onMessage(ws, data) {
     }
     case 'pass': {
       if (room.phase !== 'auction' || !cur || p.id === cur.masterId || cur.bids[p.id]) return fail(ws, 'pass_denied', 'Cannot pass now.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'The auction deadline has passed.'); }
       if (msg.heart !== null && msg.heart !== undefined) {
         const favourite = cur.lots.find(l => l.letter === msg.heart && l.ownerId !== p.id);
         if (!favourite) return fail(ws, 'heart_denied', 'You cannot admire your own painting.');
@@ -632,6 +634,7 @@ function onMessage(ws, data) {
     }
     case 'heart': {
       if (room.phase !== 'auction' || !cur) return fail(ws, 'phase', 'Admiration is closed.');
+      if (Date.now() >= room.phaseEndsAt) { endAuction(room); return fail(ws, 'auction_closed', 'Admiration has closed.'); }
       if (msg.lot === null) delete cur.hearts[p.id];
       else {
         const lot = cur.lots.find(l => l.letter === msg.lot);
@@ -679,7 +682,7 @@ function scheduleRecovered(room) {
     reveal: () => showScores(room), scores: () => nextRound(room), void: () => nextRound(room),
   }[room.phase];
   if (!next || !room.phaseEndsAt) return;
-  const grace = room.phase === 'draw' ? CONFIG.GRACE_MS : room.phase === 'auction' ? 1500 : 0;
+  const grace = room.phase === 'draw' ? CONFIG.GRACE_MS : 0;
   later(room, Math.max(0, room.phaseEndsAt + grace - Date.now()), next);
 }
 for (const raw of STORE.loadAll()) recoverRoom(raw);
