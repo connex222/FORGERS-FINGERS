@@ -251,6 +251,12 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
           if (['drawing_invalid','drawing_size','drawing_id'].includes(m.code)) {
             pendingDrawing = null; keepPending(); key = ''; render();
           }
+          // A rejected sealed action must not leave an enabled auction stuck
+          // behind a disabled button. Retain the chosen lot/amount for retry.
+          if (S && S.phase === 'auction' && ['bid_denied', 'pass_denied', 'heart_denied', 'auction_closed'].includes(m.code)) {
+            if (m.code === 'heart_denied') auc.heart = null;
+            key = ''; render();
+          }
           showError(m.msg);
           break;
         case 'state': onState(m); break;
@@ -628,11 +634,11 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     app.querySelectorAll('[data-amt]').forEach(b => b.addEventListener('click', () => { auc.amount = Number(b.dataset.amt); refresh(); }));
     $('#bidBtn').addEventListener('click', () => {
       if (!auc.sel || !auc.amount || y.score < auc.amount * 100) return;
-      sock.send({ t: 'bid', lot: auc.sel, amount: auc.amount, heart: auc.heart });
+      if (!sock.send({ t: 'bid', lot: auc.sel, amount: auc.amount, heart: auc.heart })) return toast('Connection unavailable. Retry after reconnecting.');
       $('#bidBtn').disabled = true; buzz(80);
     });
     $('#passBtn').addEventListener('click', () => {
-      sock.send({ t: 'pass', heart: auc.heart });
+      if (!sock.send({ t: 'pass', heart: auc.heart })) return toast('Connection unavailable. Retry after reconnecting.');
       $('#passBtn').disabled = true;
     });
     const cb = $('#closeBids'); if (cb) cb.addEventListener('click', () => cmd('skip'));
