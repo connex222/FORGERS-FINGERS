@@ -16,8 +16,8 @@ for(const name of ['index.html','tv.html']){
  // Parse only inline script contents: later external fullscreen scripts are not JS source.
  // The previous lastIndexOf approach accidentally included literal </script> HTML
  // whenever <script src="..."></script> followed the inline gameplay script.
- const src=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
-   .map(m=>m[1]).filter(Boolean).join('\\n;\\n');
+ const src=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+   .map(m=>m[1]).filter(Boolean).join('\n;\n');
  if(!src){failures++;continue;}
  const file=path.join(temp,name+'.js');fs.writeFileSync(file,src);
  run(`inline browser-script syntax ${name}`,process.execPath,['--check',file]);
