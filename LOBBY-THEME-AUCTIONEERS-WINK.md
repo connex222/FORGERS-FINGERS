@@ -20,4 +20,4 @@ An upbeat, friendly, gently mischievous British auction-gallery miniature: jaunt
 ## Acceptance
 Listen to one whole 64-second pass at normal TV volume and across the loop boundary. Confirm it feels cheerful rather than frantic, does not drown out Lord Gavelby or conversation, and stops when leaving the lobby. Test with sound enabled, sound off, and CDN/network failure. Audio-generation services can impose usage/licensing terms; check current Creative Claw / ElevenLabs terms before commercial distribution.
 
-This branch is a prepared, reversible theme change. **It has not been merged or deployed.**
+This was prepared as a reversible music-only release through PR #5. Review that PR and the Render deploy record for the authoritative merged/deployed status. The approved original fallback track stays in the repository.
