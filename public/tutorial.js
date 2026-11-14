@@ -179,10 +179,15 @@
   }
   function go(delta) {
     if (!run) return;
-    stop();
     if (run.index === chapters.length - 1 && delta > 0) return cleanup();
+    // Skip chapters without requiring a second Play press. A deliberate pause
+    // stays paused when browsing backwards and forwards.
+    const wasPlaying = run.playing;
+    stop();
     run.index = Math.min(chapters.length - 1, Math.max(0, run.index + delta));
+    run.playing = wasPlaying;
     render();
+    if (wasPlaying) queueSpeech();
   }
   function toggle() {
     if (!run) return;
@@ -224,7 +229,7 @@
       </div>
       <nav class="ff-tutorial-controls" aria-label="Tutorial controls">
         <button type="button" data-ff-prev>◀ Previous</button>
-        <button type="button" data-ff-play aria-pressed="false">Play</button>
+        <button type="button" data-ff-play aria-pressed="true">Pause</button>
         <button type="button" data-ff-next>Next ▶</button>
         <button type="button" data-ff-close>Back to lobby / game</button>
       </nav></div>`;
@@ -241,7 +246,9 @@
         else if (!e.shiftKey && i === controls.length - 1) { e.preventDefault(); controls[0].focus(); }
       }
     };
-    run = { dialog, index: 0, playing: false, timer: null, recording: null, voiceToken: 0, keyboard,
+    // Opening How to Play is already a user gesture: begin the presentation
+    // and recorded narration immediately, subject to existing mute preferences.
+    run = { dialog, index: 0, playing: true, timer: null, recording: null, voiceToken: 0, keyboard,
       returnFocus: document.activeElement };
     dialog.querySelector('[data-ff-prev]').addEventListener('click', () => go(-1));
     dialog.querySelector('[data-ff-play]').addEventListener('click', toggle);
@@ -249,6 +256,7 @@
     dialog.querySelector('[data-ff-close]').addEventListener('click', cleanup);
     document.addEventListener('keydown', keyboard);
     render(); dialog.querySelector('[data-ff-play]').focus();
+    queueSpeech();
   };
   FF.audioChanged = function () {
     if (!run) return;
