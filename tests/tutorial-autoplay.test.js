@@ -58,7 +58,7 @@ function makeHarness({ enabled = true, voice = true } = {}) {
     speak() { throw Error('Unexpected browser voice fallback'); }
   };
   vm.runInNewContext(source, {
-    window: { FF: ff }, document, Audio: AudioMock,
+    FF: ff, window: { FF: ff }, document, Audio: AudioMock,
     setTimeout(cb) { const id = nextTimer++; timers.set(id, cb); return id; },
     clearTimeout(id) { timers.delete(id); }
   }, { filename: 'tutorial.js' });
