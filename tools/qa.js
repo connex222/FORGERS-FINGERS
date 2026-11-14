@@ -13,7 +13,11 @@ function run(name,exe,args){
 for(const file of ['server.js','decks.js','public/shared.js','public/tutorial.js','lib/rules.js','lib/transport.js','lib/persistence.js','lib/qr.js','lib/qr-png.js'])run(`syntax ${file}`,process.execPath,['--check',file]);
 for(const name of ['index.html','tv.html']){
  const html=fs.readFileSync(path.join(root,'public',name),'utf8');
- const src=html.slice(html.lastIndexOf('<script>')+8,html.lastIndexOf('</script>'));
+ // Parse only inline script contents: later external fullscreen scripts are not JS source.
+ // The previous lastIndexOf approach accidentally included literal </script> HTML
+ // whenever <script src="..."></script> followed the inline gameplay script.
+ const src=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+   .map(m=>m[1]).filter(Boolean).join('\n;\n');
  if(!src){failures++;continue;}
  const file=path.join(temp,name+'.js');fs.writeFileSync(file,src);
  run(`inline browser-script syntax ${name}`,process.execPath,['--check',file]);

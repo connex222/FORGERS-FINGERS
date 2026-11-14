@@ -387,7 +387,8 @@ body.after #badge { display: flex; }
   document.querySelectorAll('[data-audio]').forEach(el=>el.addEventListener('change',()=>{
     FF.audio[el.dataset.audio] = el.checked; FF.saveAudio();if (S) music(S.phase);
   }));
-  function music(phase) { FF.music(phase, phase === 'draw' ? 0.23 : 0.27); }
+  // Keep the jaunty lobby theme beneath conversations and Lord Gavelby, not on top.
+  function music(phase) { FF.music(phase, phase === 'lobby' ? 0.16 : phase === 'draw' ? 0.23 : 0.27); }
   function phaseSound(phase) {
     music(phase);
     const cue = { intro: 'gavel', auction: 'gavel', scores: 'coins', final: 'fanfare', void: 'sad-trombone' }[phase];
