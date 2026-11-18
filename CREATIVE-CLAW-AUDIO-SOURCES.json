@@ -1,0 +1,83 @@
+{
+  "note": "Build-time sources and rights provenance; never loaded by the game.",
+  "assets": [
+    {
+      "key": "music-lobby",
+      "path": "public/assets/premium-sfx/music-lobby.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3c8df6e7-1960-4b8b-9d88-16f69b5f036e.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavel",
+      "path": "public/assets/premium-sfx/gavel.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/60a17895-3494-4aec-b35e-ae9fc1168d51.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "stamp-genuine",
+      "path": "public/assets/premium-sfx/stamp-genuine.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/9f17b8a8-1fd0-46bd-8a18-4658198390d1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "stamp-forgery",
+      "path": "public/assets/premium-sfx/stamp-forgery.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/2cbbc159-1d89-488a-8e06-67864c24dc55.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-01",
+      "path": "public/assets/narration/gavelby-01.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/6da3fb5a-9d63-4358-919b-ff0bb46850e1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-02",
+      "path": "public/assets/narration/gavelby-02.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/5677d799-511a-4b43-9be5-6d94aefacde7.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-03",
+      "path": "public/assets/narration/gavelby-03.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e4897d64-e77e-4c75-aa1f-9b4930c76afc.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-04",
+      "path": "public/assets/narration/gavelby-04.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/57c9fc98-2bda-484e-bee5-0cc492e531fa.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-05",
+      "path": "public/assets/narration/gavelby-05.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3b83692a-a9d4-420a-a2a7-20a84cf3c839.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-06",
+      "path": "public/assets/narration/gavelby-06.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/040dcf84-82a7-4a0f-b6b9-d671c32ac626.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-07",
+      "path": "public/assets/narration/gavelby-07.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/aa0588b2-1af8-42f2-9221-11e211a7f7bf.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-08",
+      "path": "public/assets/narration/gavelby-08.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e35f6d45-d970-4bb7-a2b1-81e6c29554b1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    },
+    {
+      "key": "gavelby-09",
+      "path": "public/assets/narration/gavelby-09.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/4f5add52-b015-434d-9ccd-84898f7290f9.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified."
+    }
+  ]
+}

@@ -8,7 +8,7 @@ const read = p => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
 
 test('new auction-house lobby music is the original instrument-only Creative Claw asset', () => {
   const shared = read('public/shared.js');
-  assert.match(shared, /"music-lobby": "https:\/\/cdn\.creativeclaw\.co\/u\/[^"]+\/audio\/[0-9a-f-]+\.mp3"/);
+  assert.match(shared,/"music-lobby": "\/assets\/premium-sfx\/music-lobby\.mp3"/);
   assert.match(shared, /new Audio\(premiumSfx\[name\] \|\| `\/assets\/sfx\/\$\{name\}\.mp3`\)/);
   assert.match(shared, /node\.src = `\/assets\/sfx\/\$\{name\}\.mp3`/);
   assert.match(shared, /if \(!FF\.soundOn \|\| !FF\.audio\[category\]\) return/);

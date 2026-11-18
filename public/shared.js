@@ -122,11 +122,11 @@
   };
   const premiumSfx = {
   // The Auctioneer\'s Wink: original Creative Claw / ElevenLabs Music lobby theme.
-  // Existing local MP3 remains the offline/fallback lobby track if the CDN fails.
-  "music-lobby": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3c8df6e7-1960-4b8b-9d88-16f69b5f036e.mp3",
-  "gavel": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/60a17895-3494-4aec-b35e-ae9fc1168d51.mp3",
-  "stamp-genuine": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/9f17b8a8-1fd0-46bd-8a18-4658198390d1.mp3",
-  "stamp-forgery": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/2cbbc159-1d89-488a-8e06-67864c24dc55.mp3"
+  // Existing local MP3 remains the fallback track when the locally bundled premium recording is unavailable.
+  "music-lobby": "/assets/premium-sfx/music-lobby.mp3",
+  "gavel": "/assets/premium-sfx/gavel.mp3",
+  "stamp-genuine": "/assets/premium-sfx/stamp-genuine.mp3",
+  "stamp-forgery": "/assets/premium-sfx/stamp-forgery.mp3"
 };
   FF.sfx = function (name, opts) {
     const category = name.startsWith('music-') ? 'music' : 'effects';
