@@ -68,3 +68,10 @@ These 14 files were locally **synthesised from newly written musical notes and m
 ## Content and protected properties
 
 Both original decks are retained intact: **Family 54 entries / After Hours 54 entries**. No exact duplicate `(catalogue, true title)` pairs; suitability/editorial certification for 18+ entries is a separate human approval. The source art remains the approved premium set, not regenerated flat placeholders. All new SVG QR codes are generated on demand from the current host/room, are not replacements for approved art and do not carry secret tokens.
+
+
+## Creative Claw originals hosted locally (18 November 2026)
+
+The approved Creative Claw lobby music and three premium effect recordings use `public/assets/premium-sfx/`. Nine Lord Gavelby recorded tutorial chapters use `public/assets/narration/gavelby-01.mp3` to `gavelby-09.mp3`. Source URLs and clip keys remain in `CREATIVE-CLAW-AUDIO-SOURCES.json` and `PREMIUM-AUDIO-SOURCES.json` for provenance only; the game never requests Creative Claw at runtime. All 14 previously locally generated baseline tracks and effects in `public/assets/sfx/` remain unchanged for fallback playback.
+
+**Licensing:** These were generated in the owner's Creative Claw workspace. Check provider-specific commercial redistribution permissions before external sale; ownership and licence are not independently certified.

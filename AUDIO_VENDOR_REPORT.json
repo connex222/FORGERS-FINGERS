@@ -1,0 +1,124 @@
+{
+  "original_total_bytes": 7126550,
+  "added_total_bytes": 7126550,
+  "transcoded_to_128kbps": false,
+  "assets": [
+    {
+      "key": "music-lobby",
+      "path": "public/assets/premium-sfx/music-lobby.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3c8df6e7-1960-4b8b-9d88-16f69b5f036e.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 1536670,
+      "bytes": 1536670,
+      "sha256": "2aabacd1cd938c58d45dacdc737969bbaa1540228496fb302df1b9595bca19db"
+    },
+    {
+      "key": "gavel",
+      "path": "public/assets/premium-sfx/gavel.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/60a17895-3494-4aec-b35e-ae9fc1168d51.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 48944,
+      "bytes": 48944,
+      "sha256": "d8c70ed2405cde7b53aff8a72fb8437ce3147d8c4a6a19e98648e735807c775b"
+    },
+    {
+      "key": "stamp-genuine",
+      "path": "public/assets/premium-sfx/stamp-genuine.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/9f17b8a8-1fd0-46bd-8a18-4658198390d1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 48944,
+      "bytes": 48944,
+      "sha256": "024055b77dd197db04b3b58a9061aada3ee2af4f560ebabecd9587a71455bd1b"
+    },
+    {
+      "key": "stamp-forgery",
+      "path": "public/assets/premium-sfx/stamp-forgery.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/2cbbc159-1d89-488a-8e06-67864c24dc55.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 48944,
+      "bytes": 48944,
+      "sha256": "07c6874d40eb5991bd70d8f192172adab0183fa4aedba38bf9513a6ed283f788"
+    },
+    {
+      "key": "gavelby-01",
+      "path": "public/assets/narration/gavelby-01.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/6da3fb5a-9d63-4358-919b-ff0bb46850e1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 592291,
+      "bytes": 592291,
+      "sha256": "370fc2a08d5151ffa15cb81ad146877b87f875c62cd00a41e76b0ba63771f420"
+    },
+    {
+      "key": "gavelby-02",
+      "path": "public/assets/narration/gavelby-02.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/5677d799-511a-4b43-9be5-6d94aefacde7.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 618204,
+      "bytes": 618204,
+      "sha256": "6845d7b2bcc633ee91687de650b7d55f43a142a1115faddbde26eb017893b6e0"
+    },
+    {
+      "key": "gavelby-03",
+      "path": "public/assets/narration/gavelby-03.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e4897d64-e77e-4c75-aa1f-9b4930c76afc.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 621966,
+      "bytes": 621966,
+      "sha256": "584081ace2d71e4b042a960fb3ed92b2fbc40275781a24726a716017027791a2"
+    },
+    {
+      "key": "gavelby-04",
+      "path": "public/assets/narration/gavelby-04.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/57c9fc98-2bda-484e-bee5-0cc492e531fa.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 583514,
+      "bytes": 583514,
+      "sha256": "48ef91146a73ddcc1cf5ec707ed8501ba6eda40ab4111879c496a3173ed5d9c3"
+    },
+    {
+      "key": "gavelby-05",
+      "path": "public/assets/narration/gavelby-05.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/3b83692a-a9d4-420a-a2a7-20a84cf3c839.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 574318,
+      "bytes": 574318,
+      "sha256": "4bb1aae45cb6901901f9f34e7c0d68656cc8489df1f9522c7f2d13dbcfdfae3c"
+    },
+    {
+      "key": "gavelby-06",
+      "path": "public/assets/narration/gavelby-06.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/040dcf84-82a7-4a0f-b6b9-d671c32ac626.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 592291,
+      "bytes": 592291,
+      "sha256": "141dd12aab9e40d29d53e6d3d5f0cc1e2680fe74a2a4bb8ffbe381e67008a762"
+    },
+    {
+      "key": "gavelby-07",
+      "path": "public/assets/narration/gavelby-07.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/aa0588b2-1af8-42f2-9221-11e211a7f7bf.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 586021,
+      "bytes": 586021,
+      "sha256": "84ff5c1a2ce23c0dc137f07871dd54edad2e88b6206318fadd0353c31da8999a"
+    },
+    {
+      "key": "gavelby-08",
+      "path": "public/assets/narration/gavelby-08.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/e35f6d45-d970-4bb7-a2b1-81e6c29554b1.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 634505,
+      "bytes": 634505,
+      "sha256": "8a6704025baab7d2a494ae8949c2fb2ba91dde24101edaf0e60a95c7edb9ac74"
+    },
+    {
+      "key": "gavelby-09",
+      "path": "public/assets/narration/gavelby-09.mp3",
+      "source": "https://cdn.creativeclaw.co/u/f3e7a3b1/audio/4f5add52-b015-434d-9ccd-84898f7290f9.mp3",
+      "licence": "Creative Claw owner-generated audio; commercial redistribution terms not independently verified.",
+      "original_bytes": 639938,
+      "bytes": 639938,
+      "sha256": "ab4a9bd17d603b3efdd4ca21ad4e2b299b7f2d9774d56882af88ba4ef0a7db73"
+    }
+  ]
+}

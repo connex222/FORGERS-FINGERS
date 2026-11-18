@@ -12,8 +12,8 @@ test('All nine Lord Gavelby chapters have complete, distinct recorded audio refe
  assert.equal(assets.chapters.length,9);
  assert.ok(chapters.reduce((n,c)=>n+c.script.split(/\s+/).length,0)>=800);
  for(let i=0;i<9;i++){
-  assert.equal(chapters[i].audio,assets.chapters[i].url);
-  assert.match(chapters[i].audio,/^https:\/\/cdn\.creativeclaw\.co\/u\/[A-Za-z0-9-]+\/audio\/[0-9a-f-]+\.mp3$/);
+  assert.equal(chapters[i].audio,'/assets/narration/gavelby-'+String(i+1).padStart(2,'0')+'.mp3');
+  assert.match(chapters[i].audio,/^\/assets\/narration\/gavelby-\d{2}\.mp3$/);
   assert.ok(chapters[i].script.length>400);
  }
  assert.equal(new Set(chapters.map(c=>c.audio)).size,9);
@@ -25,10 +25,10 @@ test('Premium sound cues preserve local fallback MP3s and use allowlisted Creati
  assert.equal(Object.keys(assets.effects).length,3);
  for(const [cue,url] of Object.entries(assets.effects)){
   assert.match(url,/^https:\/\/cdn\.creativeclaw\.co\//);
-  assert.ok(shared.includes(url));
+  assert.ok(shared.includes('/assets/premium-sfx/'+cue+'.mp3'));
   assert.ok(fs.existsSync(path.join(root,'public/assets/sfx',cue+'.mp3')));
  }
- assert.ok(read('server.js').includes("media-src 'self' https://cdn.creativeclaw.co"));
+ assert.ok(read('server.js').includes("media-src 'self';"));
  assert.ok(shared.includes("FF.audio.enabled"));
 });
 test('Recorded tutorial respects mute and supports navigation, pause, completion and browser-speech fallback',()=>{
