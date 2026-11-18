@@ -2,7 +2,7 @@ name: Bundle Creative Claw audio locally
 on:
   push:
     branches: [fix/vendor-creativeclaw-audio]
-    paths: ['CREATIVE-CLAW-AUDIO-SOURCES.json']
+    paths: ['CREATIVE-CLAW-AUDIO-SOURCES.json', 'tests/offline-audio.test.mjs']
   workflow_dispatch:
 permissions:
   contents: write
