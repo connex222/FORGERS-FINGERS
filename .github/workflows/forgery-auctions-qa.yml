@@ -24,9 +24,9 @@ jobs:
         with:
           node-version: '22'
       - name: Install locked dependencies (none external)
-        run: npm ci --offline
-      - name: Complete project QA
-        run: npm run qa
+        run: npm ci --offline --ignore-scripts
+      - name: Complete project QA including verified local audio
+        run: npm run qa && node --test tests/offline-audio.test.mjs
       - name: Economic stress simulation
         run: |
           node tools/forgery-balance-simulation.js > forgery-economics-results.json
