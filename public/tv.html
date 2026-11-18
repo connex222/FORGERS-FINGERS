@@ -345,6 +345,10 @@ body.after #badge { display: flex; }
     close() { $('#offline').hidden = false; },
     message(m) {
       switch (m.t) {
+        case 'serverRestarting':
+          $('#offline').hidden = false;
+          $('#offline').textContent = 'Server restarting — keeping your gallery invitation ready…';
+          break;
         case 'tv_ok':
           saved = { code: m.code, token: m.token };
           try { sessionStorage.setItem('ff-tv', JSON.stringify(saved)); } catch { /* ignore */ }
