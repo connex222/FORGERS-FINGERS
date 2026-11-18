@@ -10,10 +10,17 @@ test('runtime makes no remote MP3 or Creative Claw requests',()=>{
 for(const file of [...scan(path.join(root,'public')),...scan(path.join(root,'server'))]){
 const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/https?:\/\/[^\s"'<>]+?\.(?:mp3|ogg|wav|m4a|aac)/i,file);assert.doesNotMatch(s,/cdn\.creativeclaw\.co/i,file);}
 });
-test('original lobby recording is bundled and legacy fallback is retained',()=>{
-const assets=JSON.parse(fs.readFileSync(path.join(root,'CREATIVE-CLAW-AUDIO-SOURCES.json'))).assets;
-assert.equal(assets.length,1);
-for(const a of assets){const p=path.join(root,a.path);assert.ok(fs.existsSync(p),a.path);assert.ok(fs.statSync(p).size>4000,a.path);}
-assert.ok(fs.statSync(path.join(root,'public/sounds/mus-lobby.ogg')).size>10000);
-assert.match(fs.readFileSync(path.join(root,'public/shared/client.js'),'utf8'),/track\.addEventListener\('error'/);
+test('every source-recorded original is actually bundled as a playable local MP3',()=>{
+ const assets=JSON.parse(fs.readFileSync(path.join(root,'CREATIVE-CLAW-AUDIO-SOURCES.json'),'utf8')).assets;
+ assert.ok(assets.length>=1);
+ const paths=new Set();
+ for(const a of assets){
+   assert.ok(!paths.has(a.path),'duplicate file destination '+a.path);
+   paths.add(a.path);
+   const p=path.join(root,a.path);
+   assert.ok(fs.existsSync(p),'missing '+a.path);
+   const bytes=fs.readFileSync(p);
+   assert.ok(bytes.length>4000,'incomplete '+a.path);
+   assert.ok(bytes.toString('ascii',0,3)==='ID3' || bytes[0]===255&&(bytes[1]&224)===224,'invalid MP3 '+a.path);
+ }
 });
