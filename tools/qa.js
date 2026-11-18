@@ -2,10 +2,16 @@
 const cp=require('node:child_process');const fs=require('node:fs');const os=require('node:os');const path=require('node:path');
 const root=path.resolve(__dirname,'..');const temp=fs.mkdtempSync(path.join(os.tmpdir(),'forgers-qa-'));
 let failures=0;let steps=0;
+// Build and test subprocesses must never read or overwrite real gallery secrets,
+// even if Render exposes production environment variables during its build.
+const qaEnv={...process.env};
+delete qaEnv.FF_DATA_DIR;
+delete qaEnv.FF_PERSISTENCE_KEY;
+for(const key of Object.keys(qaEnv))if(key.startsWith('FF_TEST_'))delete qaEnv[key];
 function run(name,exe,args){
  steps++;
  console.log(`\n=== ${name} ===`);
- const r=cp.spawnSync(exe,args,{cwd:root,encoding:'utf8',timeout:120000,maxBuffer:10*1024*1024});
+ const r=cp.spawnSync(exe,args,{cwd:root,env:qaEnv,encoding:'utf8',timeout:120000,maxBuffer:10*1024*1024});
  if(r.stdout)process.stdout.write(r.stdout);
  if(r.stderr)process.stderr.write(r.stderr);
  if(r.error||r.status!==0){failures++;console.error(`FAIL: ${name} (${r.error||r.status})`);}else console.log(`PASS: ${name}`);
