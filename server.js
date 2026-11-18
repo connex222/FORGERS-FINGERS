@@ -15,6 +15,7 @@ const QRPNG = require('./lib/qr-png');
 const DECKS = require('./decks');
 
 const PORT = Number(process.env.PORT || 3000);
+let shuttingDown = false;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const CONFIG = {
@@ -60,6 +61,7 @@ const HEADERS = {
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
 };
 const server = http.createServer((req, res) => {
+  if (shuttingDown) { res.writeHead(503, { 'Content-Type':'text/plain', 'Retry-After':'2' }); return res.end('Server restarting'); }
   for (const [name, value] of Object.entries(HEADERS)) res.setHeader(name, value);
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end('Method not allowed'); }
   let urlPath;
@@ -663,6 +665,12 @@ function onMessage(ws, data) {
 function onClose(ws) {
   const room = rooms.get(ws._room);
   if (!room) return;
+  if (shuttingDown) {
+    if (ws._role === 'tv' && room.tv === ws) room.tv = null;
+    const player = getPlayer(room, ws._pid);
+    if (player && player.ws === ws) { player.ws = null; player.connected = false; }
+    return; // A platform restart must not trigger the live-game timeout / bot handover.
+  }
   if (ws._role === 'tv') { if (room.tv === ws) { room.tv = null; sync(room); } return; }
   const p = getPlayer(room, ws._pid);
   if (!p || p.ws !== ws) return;
@@ -714,14 +722,15 @@ function allowedOrigin(req) {
 }
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 262144, verifyClient: allowedOrigin });
 wss.on('connection', ws => {
+  if (shuttingDown) { ws.close(1012, 'Server restarting'); return; }
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
-  ws.on('message', data => { try { onMessage(ws, data); } catch { fail(ws, 'server', 'Action rejected.'); } });
+  ws.on('message', data => { if (shuttingDown) return; try { onMessage(ws, data); } catch { fail(ws, 'server', 'Action rejected.'); } });
   ws.on('close', () => onClose(ws));
   ws.on('error', () => { /* handled by close */ });
 });
 
-setInterval(() => {
+const heartbeatTimer = setInterval(() => {
   for (const ws of wss.clients) {
     if (!ws.isAlive) { ws.terminate(); continue; }
     ws.isAlive = false;
@@ -729,7 +738,7 @@ setInterval(() => {
   }
 }, 30000);
 
-setInterval(() => {
+const sweepTimer = setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
     const empty = !room.tv && !room.players.some(p => p.connected);
@@ -742,12 +751,57 @@ setInterval(() => {
   }
 }, Number(process.env.FF_TEST_CLEAN_INTERVAL_MS || 60000));
 
-function shutdown() {
-  for (const room of rooms.values()) { clearTimeout(room.timer); STORE.save(room); }
-  server.close(() => process.exit(0));
-  for (const client of wss.clients) client.terminate();
-  setTimeout(() => process.exit(0), 2500).unref();
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log('FORGERS FINGER: draining galleries for ' + signal);
+  clearInterval(heartbeatTimer);
+  clearInterval(sweepTimer);
+
+  // Keep gameplay unchanged while Render swaps instances. Do not advance a
+  // round or reassign the Head Curator due solely to a planned restart.
+  let failed = false;
+  for (const room of rooms.values()) {
+    clearTimeout(room.timer);
+    for (const player of room.players) clearTimeout(player.dropTimer);
+    try { STORE.save(room); }
+    catch (error) { failed = true; console.error('FORGERS FINGER: gallery checkpoint failed:', error.message); }
+  }
+
+  const clients = [...wss.clients];
+  const closed = clients.map(ws => new Promise(resolve => {
+    if (ws.readyState === 3) return resolve();
+    ws.once('close', resolve);
+  }));
+  const deadline = setTimeout(() => {
+    for (const ws of wss.clients) try { ws.terminate(); } catch {}
+    console.error('FORGERS FINGER: shutdown exceeded 9.5 seconds');
+    process.exit(1);
+  }, 9500);
+  const force = setTimeout(() => {
+    for (const ws of wss.clients) try { ws.terminate(); } catch {}
+  }, 2500);
+  force.unref?.();
+
+  for (const ws of clients) {
+    send(ws, { t:'serverRestarting' });
+    try { ws.close(1012, 'Server restarting'); }
+    catch { try { ws.terminate(); } catch {} }
+  }
+  const httpDrain = new Promise(resolve => server.close(error => resolve(error)));
+  server.closeIdleConnections?.();
+  Promise.all([httpDrain, ...closed]).then(results => {
+    const closeError = results[0];
+    if (closeError) { failed = true; console.error('FORGERS FINGER: HTTP shutdown failed:', closeError.message); }
+    clearTimeout(force);
+    clearTimeout(deadline);
+    process.exit(failed ? 1 : 0);
+  }).catch(error => {
+    clearTimeout(force); clearTimeout(deadline);
+    console.error('FORGERS FINGER: shutdown failed:', error.message);
+    process.exit(1);
+  });
 }
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
 server.listen(PORT, () => console.log(`Forgers Finger running on port ${server.address().port}`));

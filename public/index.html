@@ -241,6 +241,10 @@ label { font-weight: 700; display: block; margin-bottom: 6px; }
     close() { $('#net').hidden = false; },
     message(m) {
       switch (m.t) {
+        case 'serverRestarting':
+          $('#net').hidden = false;
+          $('#net').textContent = 'Server restarting — reclaiming your saved artist seat…';
+          break;
         case 'joined':
           if (!joined) FF.sfx('join', {volume:0.25});
           joined = true; me.pid = m.pid; me.code = m.code; me.name = m.name; if (m.resumeToken) me.resumeToken = m.resumeToken; save();
